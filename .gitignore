@@ -1,0 +1,32 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python / Pytest caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# SQLite Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE / Editor Settings
+.vscode/
+.idea/
+*.swp
+
+# OAuth credentials & tokens
+credentials.json
+token.json

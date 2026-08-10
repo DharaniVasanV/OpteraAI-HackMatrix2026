@@ -1,0 +1,24 @@
+# Core web framework
+fastapi==0.115.12
+uvicorn[standard]==0.34.3
+
+# Testing
+pytest==8.3.5
+
+# Google API (Gmail integration)
+google-api-python-client==2.172.0
+google-auth==2.40.3
+google-auth-httplib2==0.2.0
+
+# LLM providers
+google-genai==1.20.0
+requests==2.32.3
+
+# Database ORM
+sqlalchemy==2.0.41
+
+# PostgreSQL driver (optional, falls back to SQLite)
+psycopg2-binary==2.9.10
+
+# Utilities
+python-multipart==0.0.20
