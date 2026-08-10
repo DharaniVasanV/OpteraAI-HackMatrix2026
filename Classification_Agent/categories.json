@@ -1,0 +1,49 @@
+{
+    "categories": [
+        {
+            "name": "Meeting",
+            "keywords": ["meeting", "google meet", "zoom call", "teams meeting", "webex", "skype call", "huddle", "sync call", "standup call", "video call", "calendar invite"],
+            "description": "Live video meetings, calls, webinars, or calendar invites"
+        },
+        {
+            "name": "Form",
+            "keywords": ["form", "forms.gle", "docs.google.com/forms", "forms.office.com", "survey", "rsvp", "feedback", "fill out"],
+            "description": "Circulated forms, surveys, or registration forms"
+        },
+        {
+            "name": "Scholarship",
+            "keywords": ["scholarship", "fellowship", "grant", "bursary", "financial aid"],
+            "description": "Scholarships, grants, or financial aid announcements"
+        },
+        {
+            "name": "Internship",
+            "keywords": ["intern", "internship", "co-op", "apprentice"],
+            "description": "Internship roles, co-op opportunities, or student trainee postings"
+        },
+        {
+            "name": "Placement",
+            "keywords": ["placement", "job offer", "recruitment", "hired", "career"],
+            "description": "Campus placements, job offers, or recruitment drives"
+        },
+        {
+            "name": "Contest",
+            "keywords": ["contest", "competition", "codechef", "codeforces", "hackerearth", "prize", "unstop"],
+            "description": "Coding contests or competitive challenges"
+        },
+        {
+            "name": "Hackathon",
+            "keywords": ["hackathon", "devpost", "devfolio", "dorahacks", "buildathon"],
+            "description": "Hackathons, buildathons, or coding marathons"
+        },
+        {
+            "name": "CFI",
+            "keywords": ["cfi", "centre for innovation", "sri eshwar"],
+            "description": "Centre for Innovation events and announcements"
+        },
+        {
+            "name": "LeetCode",
+            "keywords": ["leetcode", "weekly contest", "biweekly contest"],
+            "description": "LeetCode challenges and contest notifications"
+        }
+    ]
+}
