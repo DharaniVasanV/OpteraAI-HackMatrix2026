@@ -1,0 +1,68 @@
+{
+  "054c44a93c5861ad81f971566b17428ba3009e2ce0489c83866373509ac1b1b6": {
+    "document_found": true,
+    "document_name": "problem_statement_2025.pdf",
+    "document_type": "Rulebook",
+    "category": [
+      "Hackathon Rulebooks"
+    ],
+    "importance": "High",
+    "priority": "High",
+    "priority_score": 75,
+    "source": "https://sih.gov.in/downloads/problem_statement_2025.pdf",
+    "download_url": "https://sih.gov.in/downloads/problem_statement_2025.pdf",
+    "download_status": "Queued",
+    "duplicate": false,
+    "safe_to_download": true,
+    "pages": 0,
+    "file_size": "",
+    "summary": "[Rulebook] Subject: Smart India Hackathon 2025 - Registration Open\n\n        Download Problem Statement: https://sih.gov.in/downloads/problem_statement_2025.pdf\n        Download Rulebook: https://sih.gov.in/downloads/rulebook_2025.pdf\n        Register here: https://sih.gov.in/register\n        Deadline: 30/07/2025\n        Prize Pool: INR 1,00,000",
+    "preview_text": "",
+    "extracted_text": "",
+    "highlights": [
+      "30/07/2025"
+    ],
+    "deadlines": [
+      "30/07/2025"
+    ],
+    "tasks": [],
+    "important_links": [
+      "https://sih.gov.in/downloads/rulebook_2025.pdf",
+      "https://sih.gov.in/downloads/problem_statement_2025.pdf"
+    ],
+    "metadata": {
+      "organizer": "",
+      "company": "",
+      "author": "",
+      "issue_date": "30/07/2025",
+      "expiry_date": "",
+      "registration_link": "https://sih.gov.in/register",
+      "application_link": "https://sih.gov.in/register",
+      "contact_email": "",
+      "website": "https://sih.gov.in/downloads/problem_statement_2025.pdf"
+    },
+    "recommended_actions": [
+      "Download",
+      "Open",
+      "Notify User",
+      "Preview",
+      "Save",
+      "Apply",
+      "Register",
+      "Add to Calendar"
+    ],
+    "required_agents": [
+      "Calendar Agent",
+      "Notification Agent",
+      "Application Agent"
+    ],
+    "reason": "Classified as Rulebook under Hackathon Rulebooks.",
+    "confidence": 65,
+    "document_id": "dc92f2fd-e5e8-4e67-a585-57439cb43b03",
+    "date_indexed": "2026-08-09T20:35:40.027215Z",
+    "reference_count": 1,
+    "doc_hash": "054c44a93c5861ad81f971566b17428ba3009e2ce0489c83866373509ac1b1b6",
+    "raw_input": "\n        Subject: Smart India Hackathon 2025 - Registration Open\n\n        Download Problem Statement: https://sih.gov.in/downloads/problem_statement_2025.pdf\n        Download Rulebook: https://sih.gov.in/downloads/rulebook_2025.pdf\n        Register here: https://sih.gov.in/register\n        Deadline: 30/07/2025\n        Prize Pool: INR 1,00,000\n        ",
+    "version": 1
+  }
+}
