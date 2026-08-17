@@ -731,7 +731,7 @@ The vector knowledge layer uses a separate system called ChromaDB.
 
 **Live Demo:** https://drive.google.com/drive/folders/1cVyBKyX5FMpy2AnCwwitJmcTknelBWNu?usp=sharing
 
-**Project Presentation (PPT):** https://drive.google.com/drive/folders/1jCI23z_xEA2_DDKTJCrwOWrJfKlKp4aN?usp=sharing
+**Project Presentation (PPT):** https://drive.google.com/file/d/11ACfN8IMJiITO5oeNDPEqqr3WOxZ4tKB/view?usp=sharing
 
 ---
 
