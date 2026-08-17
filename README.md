@@ -9,7 +9,7 @@
 
 ## **1. Team Details**
 
-**Team Name:** DarkElixir
+**Team Name:** Luminex
 
 **Team Leader:** Dharani Vasan V
 
@@ -145,7 +145,7 @@ OpteraAI is made up of 16 agents.
 
 | 7 | Knowledge Agent | Provide RAG personal knowledge search |
 
-| 8 | Meeting Agent | Automate meetings, generate transcripts |
+| 8 | Meeting Agent | Automate meetings, generate transcripts and answer questions on behalf of user |
 
 | 9 | Career Agent | Provide career guidance |
 
