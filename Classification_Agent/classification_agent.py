@@ -161,12 +161,22 @@ class ClassificationAgent:
         """Calls Groq or Gemini with structured AgentOS classification prompt."""
         groq_key = os.getenv("GROQ_API_KEY")
         api_key = os.getenv("GEMINI_API_KEY")
-        categories_str = ", ".join(categories)
+        
+        config_map = {c["name"]: c for c in self.category_config}
+        category_details = []
+        for cat in categories:
+            if cat in config_map:
+                desc = config_map[cat].get("description", "")
+                category_details.append(f"- {cat}: {desc}")
+            else:
+                category_details.append(f"- {cat}")
+                
+        categories_str = "\n".join(category_details)
 
         prompt = (
             "You are the Classification Agent of AgentOS.\n"
-            "Your responsibility is to analyze the email, extract key entities, and classify it into one or more relevant categories.\n"
-            f"Allowed Categories: {categories_str}\n\n"
+            "Your responsibility is to analyze the email, extract key entities, and carefully classify it into one or more relevant categories.\n"
+            f"Allowed Categories and Descriptions:\n{categories_str}\n\n"
             "Respond ONLY with a valid JSON object with the following schema:\n"
             "{\n"
             '  "agent_thought": "Brief step-by-step reasoning explaining the classification decision.",\n'

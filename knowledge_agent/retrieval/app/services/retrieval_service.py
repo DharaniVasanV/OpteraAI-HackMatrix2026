@@ -1,13 +1,18 @@
 """
 app/services/retrieval_service.py
 
-Core Knowledge Retrieval Service executing all 12 RAG steps with GROQ_API_KEY5.
+Core Knowledge Retrieval Service:
+- STEPS 3-6: Embedding + Cosine Similarity search via local model (zero-cost)
+- STEP 8-9: Groq used ONLY to format the top retrieved chunk into a clean answer
+  (minimal tokens: context trimmed to 1000 chars, answer capped at 400 tokens)
 """
 
 import json
 import time
 import re
-from groq import Groq
+import sys
+sys.path.insert(0, r"E:\AgentOS")
+from groq_rotation import groq_chat_sync
 
 from app.config.settings import get_settings
 from app.services.embedder import generate_query_embedding
@@ -17,18 +22,8 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 settings = get_settings()
 
-SYSTEM_PROMPT = """
-You are an AI Knowledge Assistant.
-Answer ONLY using the supplied context.
-Never use outside knowledge.
-Never guess.
-Never hallucinate.
-If the answer is not present inside the retrieved context, reply:
-"I could not find sufficient information inside the AgentOS Knowledge Base."
-Always answer in clear English.
-If multiple retrieved documents disagree, mention the conflict.
-Always preserve names, dates and facts exactly.
-"""
+SYSTEM_PROMPT = """You are a precise Knowledge Assistant. Answer the question using ONLY the provided context.
+Be concise and direct. If the answer is not in the context, say: 'I could not find that information in the knowledge base.'"""
 
 
 async def process_retrieval_query(user_query: str) -> dict:
@@ -83,46 +78,33 @@ async def process_retrieval_query(user_query: str) -> dict:
             "processing_time_ms": processing_time_ms
         }
 
-    # STEP 7: Build Retrieval Context
+    # STEP 7: Build Retrieval Context — only top 2 chunks, trimmed to 800 chars each
+    top_chunks = filtered_chunks[:2]
     context_blocks = []
-    for idx, chunk in enumerate(filtered_chunks):
-        block = f"[DOCUMENT {idx+1}: {chunk['document_name']} (ID: {chunk['document_id']})]\n{chunk['original_text']}"
+    for idx, chunk in enumerate(top_chunks):
+        trimmed = chunk['original_text'][:800]
+        block = f"[SOURCE {idx+1}]\n{trimmed}"
         context_blocks.append(block)
-
     context_str = "\n\n".join(context_blocks)
 
-    # STEP 8: Generate Final Prompt & Call Groq API Key 5
-    api_key = settings.effective_groq_key
-    if not api_key:
-        return {
-            "status": "failed",
-            "reason": "Answer generation failed."
-        }
-
+    # STEP 8-9: Use Groq ONLY to format the answer — minimal token usage
     try:
-        logger.info("STEP 8 & 9: Generating grounded response via Groq API Key 5 (%s)...", settings.GROQ_CHAT_MODEL)
-        client = Groq(api_key=api_key)
-        user_prompt = f"Question:\n{user_query}\n\nRetrieved Context:\n{context_str}"
-
-        res = client.chat.completions.create(
-            model=settings.GROQ_CHAT_MODEL,
+        logger.info("STEP 8 & 9: Formatting answer via Groq (minimal tokens)...")
+        user_prompt = f"Question: {user_query}\n\nContext:\n{context_str}\n\nAnswer:"
+        answer = groq_chat_sync(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.1
+            temperature=0.1,
+            max_tokens=400,
         )
-
-        if res.choices and res.choices[0].message.content:
-            answer = res.choices[0].message.content.strip()
-        else:
-            answer = "I could not find sufficient information inside the AgentOS Knowledge Base."
+        if not answer:
+            answer = top_chunks[0]['original_text'][:500] if top_chunks else "I could not find sufficient information inside the AgentOS Knowledge Base."
     except Exception as e:
-        logger.error("Groq API Key 5 answer generation failed: %s", e)
-        return {
-            "status": "failed",
-            "reason": "Answer generation failed."
-        }
+        logger.warning("Groq formatting failed, returning raw chunk text: %s", e)
+        # Graceful fallback: return the best matching chunk text directly
+        answer = top_chunks[0]['original_text'][:600] if top_chunks else "I could not find sufficient information inside the AgentOS Knowledge Base."
 
     # STEP 10: Generate Citations & Document Metadata
     retrieved_documents = []

@@ -78,6 +78,14 @@ class SyncService:
         connection = self.repo.get_google_connection(user_id)
         g_service = GoogleCalendarService(connection)
 
+        # 0. Sync native Google Calendar events FIRST to prevent duplicates or missed events
+        try:
+            native_events = g_service.fetch_native_events(max_results=100)
+            for g_item in native_events:
+                self._process_native_google_event(g_item, user_id, summary)
+        except Exception as e:
+            logger.error(f"Failed to fetch native Google Calendar events: {e}")
+
         # 1. Process meeting_tasks
         for task_rec in sources.get("meeting_tasks", []):
             summary.total_processed += 1
@@ -309,3 +317,75 @@ class SyncService:
                 g_service=g_service,
                 summary=summary
             )
+
+    def _process_native_google_event(self, g_item: Dict[str, Any], user_id: str, summary: SyncSummary):
+        g_id = g_item.get("id")
+        if not g_id:
+            return
+            
+        existing_event = self.repo.get_event_by_google_id(g_id)
+        
+        title = g_item.get("summary", "Busy")
+        desc = g_item.get("description", "")
+        loc = g_item.get("location", "")
+        
+        start = g_item.get("start", {})
+        end = g_item.get("end", {})
+        start_dt_str = start.get("dateTime") or start.get("date")
+        end_dt_str = end.get("dateTime") or end.get("date")
+        
+        # Determine internal start and end objects
+        if not start_dt_str:
+            return
+            
+        start_dt = DateService.parse_datetime(start_dt_str)
+        end_dt = DateService.parse_datetime(end_dt_str) if end_dt_str else start_dt
+        if not start_dt:
+            return
+
+        html_link = g_item.get("htmlLink")
+
+        if existing_event:
+            has_changed = (
+                existing_event.title != title or \
+                not _dt_equals(existing_event.start_datetime, start_dt) or \
+                not _dt_equals(existing_event.end_datetime, end_dt) or \
+                (existing_event.description or "") != desc or \
+                (existing_event.location or "") != loc
+            )
+            
+            if has_changed:
+                existing_event.title = title
+                existing_event.description = desc
+                existing_event.start_datetime = start_dt
+                existing_event.end_datetime = end_dt
+                existing_event.location = loc
+                existing_event.synced_at = datetime.now(tz.utc)
+                self.repo.update_event(existing_event)
+                summary.updated_count += 1
+            else:
+                summary.unchanged_count += 1
+        else:
+            new_event = CalendarEventModel(
+                user_id=user_id,
+                source_type="google_calendar",
+                source_id=f"gcal_{g_id}",
+                event_type="MEETING",
+                title=title,
+                description=desc,
+                start_datetime=start_dt,
+                end_datetime=end_dt,
+                deadline=None,
+                all_day=True if start.get("date") else False,
+                location=loc,
+                external_url=html_link,
+                priority="MEDIUM",
+                status="ACTIVE",
+                google_calendar_id=g_item.get("organizer", {}).get("email", "primary"),
+                google_event_id=g_id,
+                google_event_link=html_link,
+                sync_status="SYNCED",
+                synced_at=datetime.now(tz.utc)
+            )
+            self.repo.create_event(new_event)
+            summary.created_count += 1

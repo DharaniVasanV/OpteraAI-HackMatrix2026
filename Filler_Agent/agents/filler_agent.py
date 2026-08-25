@@ -1,6 +1,8 @@
 import uuid
+import os
 import json
 import logging
+import re
 from sqlalchemy.orm import Session
 from models.db_models import FormSession, FormQuestion, UserProfile, SubmissionHistory
 from services.form_parser import parse_google_form
@@ -12,18 +14,119 @@ logger = logging.getLogger(__name__)
 class FillerAgent:
     """
     Autonomous Filler Agent Orchestrator.
-    Manages end-to-end lifecycle of form analysis, semantic matching, user input collection, and automation execution.
+    Manages end-to-end lifecycle: form analysis, resume sync, semantic matching,
+    user input collection, review, and Playwright form submission.
     """
+
+    @staticmethod
+    def _sync_resume_to_profile(db: Session, user_email: str = "default"):
+        """
+        Pull structured resume data from the Resume Agent's PostgreSQL DB into
+        UserProfile so form questions are matched against real resume data.
+        """
+        try:
+            import psycopg2
+
+            db_url = os.getenv("DATABASE_URL", "")
+            m = re.search(r"postgresql.*://([^:]+):([^@]+)@([^:/]+):?(\d+)?/(\w+)", db_url)
+            if not m:
+                return
+            user_pg, pw_pg, host_pg, port_pg, dbname_pg = m.groups()
+
+            conn = psycopg2.connect(
+                dbname=dbname_pg, user=user_pg, password=pw_pg,
+                host=host_pg, port=int(port_pg or 5432), connect_timeout=3
+            )
+            cur = conn.cursor()
+
+            try:
+                # 1. Fetch the user's actual profile name
+                cur.execute("SELECT full_name FROM users WHERE email = %s", (user_email,))
+                user_row = cur.fetchone()
+                user_full_name = str(user_row[0]).lower() if user_row and user_row[0] else ""
+
+                # 2. Fetch all resumes belonging to this user
+                cur.execute("""
+                    SELECT id, first_name, last_name, email, phone, location, summary, file_path
+                    FROM resumes 
+                    WHERE user_email = %s
+                    ORDER BY id DESC
+                """, (user_email,))
+                rows = cur.fetchall()
+
+                best_row = None
+                if rows:
+                    if user_full_name:
+                        for r in rows:
+                            r_fname = (r[1] or "").lower()
+                            r_lname = (r[2] or "").lower()
+                            # Match if first name or last name is present in user's profile name
+                            if (len(r_fname) > 1 and r_fname in user_full_name) or (len(r_lname) > 1 and r_lname in user_full_name):
+                                best_row = r
+                                break
+                    if not best_row:
+                        best_row = rows[0] # Fallback to latest
+                else:
+                    # Fallback across all if none found explicitly attached
+                    cur.execute("""
+                        SELECT id, first_name, last_name, email, phone, location, summary, file_path
+                        FROM resumes 
+                        ORDER BY id DESC LIMIT 1
+                    """)
+                    best_row = cur.fetchone()
+
+                if best_row:
+                    res_id, first_name, last_name, email, phone, location, summary, file_path = best_row
+                    fields = {
+                        "Full Name": f"{first_name or ''} {last_name or ''}".strip(),
+                        "Email Address": email,
+                        "Phone Number": phone,
+                        "City / Current Location": location,
+                        "Briefly describe your career goals and background": summary,
+                        "Resume / Curriculum Vitae Document": file_path
+                    }
+                    
+                    cur.execute("SELECT name FROM skills WHERE resume_id = %s", (res_id,))
+                    skills_rows = cur.fetchall()
+                    if skills_rows:
+                        fields["Technical Skills (Select all that apply)"] = ", ".join([r[0] for r in skills_rows])
+                        
+                    cur.execute("SELECT company, job_title FROM experiences WHERE resume_id = %s", (res_id,))
+                    exp_rows = cur.fetchall()
+                    if exp_rows:
+                        fields["Preferred Job Role / Title"] = exp_rows[0][1]
+                        fields["Years of Professional Experience"] = f"{len(exp_rows)} Years"
+
+                    for profile_key, value in fields.items():
+                        if value and str(value).strip():
+                            val_str = str(value).strip()
+                            existing = db.query(UserProfile).filter(UserProfile.field_key == profile_key).first()
+                            if existing:
+                                existing.field_value = val_str
+                            else:
+                                db.add(UserProfile(field_key=profile_key, field_value=val_str, category="Resume"))
+                    db.commit()
+                    logger.info("Synced resume data into UserProfile.")
+            except Exception as e:
+                logger.debug(f"Resume sync error: {e}")
+            finally:
+                conn.close()
+
+        except Exception as e:
+            logger.debug(f"Resume sync skipped (non-critical): {e}")
 
     @staticmethod
     async def create_and_analyze_session(db: Session, form_url: str, user_email: str = "default") -> FormSession:
         session_id = str(uuid.uuid4())[:12]
-        
-        # Parse Google Form
+
+        # Sync latest resume data into UserProfile before matching
+        FillerAgent._sync_resume_to_profile(db, user_email)
+
+        # Parse Google Form via Playwright
         form_data = await parse_google_form(form_url, user_email)
-        
+
         if form_data.get("error") or not form_data.get("questions"):
-            err_msg = form_data.get("error", "Failed to fetch form questions from the URL. Please check the Google Form URL.")
+            err_msg = form_data.get("error", "Failed to fetch form questions. Please check the Google Form URL.")
             raise ValueError(err_msg)
 
         form_session = FormSession(
@@ -34,17 +137,15 @@ class FillerAgent:
             status="analyzing",
             fill_mode="auto"
         )
-
         db.add(form_session)
         db.commit()
 
-        # Load user profile key-values
+        # Load enriched user profile
         profiles = db.query(UserProfile).all()
         profile_list = [{"field_key": p.field_key, "field_value": p.field_value} for p in profiles]
 
         has_missing = False
 
-        # Process each question with AI engine
         for q in form_data.get("questions", []):
             prop_ans, conf, src, is_missing = match_question_to_profile(
                 question_text=q["question_text"],
@@ -71,7 +172,6 @@ class FillerAgent:
             )
             db.add(fq)
 
-        # Set session state based on missing fields
         form_session.status = "missing_info" if has_missing else "review"
         db.commit()
         db.refresh(form_session)
@@ -92,10 +192,8 @@ class FillerAgent:
                 q.source = "User"
                 q.confidence_score = 1.0
 
-                # Check if "Remember this answer" was checked
                 should_remember = remember_keys.get(str(q_id), False) or remember_keys.get(int(q_id), False)
                 if should_remember and answer_val.strip():
-                    # Check if already exists in UserProfile
                     existing = db.query(UserProfile).filter(UserProfile.field_key == q.question_text).first()
                     if existing:
                         existing.field_value = answer_val
@@ -127,7 +225,9 @@ class FillerAgent:
                 "field_id": q.field_id,
                 "question_text": q.question_text,
                 "proposed_answer": q.user_answer or q.proposed_answer or "",
-                "field_type": q.field_type
+                "user_answer": q.user_answer or "",
+                "field_type": q.field_type,
+                "options": q.options or [],
             })
 
         # Run Playwright execution flow
@@ -135,9 +235,10 @@ class FillerAgent:
 
         # Record Submission History
         summary_map = {q.question_text: (q.user_answer or q.proposed_answer or "N/A") for q in session.questions}
-        
+
         submission = SubmissionHistory(
             session_id=session_id,
+            user_email=user_email,
             form_url=session.form_url,
             title=session.title,
             status="completed",
@@ -145,7 +246,7 @@ class FillerAgent:
             log_json=json.dumps(logs)
         )
         db.add(submission)
-        
+
         session.status = "completed"
         db.commit()
         return submission

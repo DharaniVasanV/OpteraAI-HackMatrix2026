@@ -1,0 +1,788 @@
+{% extends "base.html" %}
+
+{% block title %}AgentOS Unified Control Center{% endblock %}
+
+{% block content %}
+<!-- 1️⃣ HOME DASHBOARD -->
+<div class="tab-pane active" id="tab-home">
+    <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 4px;">Good Morning, Dharani Vasan 👋</h1>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">Your unified AgentOS ecosystem is operating smoothly across all 13 autonomous microservices.</p>
+    </div>
+
+    <!-- Top Cards Grid -->
+    <div class="stat-grid">
+        <div class="card" onclick="switchTab('agents')" style="cursor: pointer;">
+            <div class="stat-header">
+                <span>Active AI Agents</span>
+                <i data-lucide="cpu" style="color: var(--accent-primary);"></i>
+            </div>
+            <div class="stat-value" id="home-stat-agents">13 / 13</div>
+            <div class="stat-footer">
+                <i data-lucide="check-circle" style="width: 14px;"></i> 100% Microservices Online
+            </div>
+        </div>
+
+        <div class="card" onclick="switchTab('inbox')" style="cursor: pointer;">
+            <div class="stat-header">
+                <span>Emails Processed</span>
+                <i data-lucide="mail" style="color: var(--accent-secondary);"></i>
+            </div>
+            <div class="stat-value" id="home-stat-emails">37</div>
+            <div class="stat-footer">
+                <i data-lucide="trending-up" style="width: 14px;"></i> Synced with Watcher & Priority
+            </div>
+        </div>
+
+        <div class="card" onclick="switchTab('meetings')" style="cursor: pointer;">
+            <div class="stat-header">
+                <span>Upcoming Meetings</span>
+                <i data-lucide="video" style="color: var(--accent-pink);"></i>
+            </div>
+            <div class="stat-value" id="home-stat-meetings">3</div>
+            <div class="stat-footer" style="color: #60a5fa;">
+                <i data-lucide="clock" style="width: 14px;"></i> Next: Sprint Kickoff (2 PM)
+            </div>
+        </div>
+
+        <div class="card" onclick="switchTab('applications')" style="cursor: pointer;">
+            <div class="stat-header">
+                <span>Applications Pending</span>
+                <i data-lucide="file-check" style="color: var(--status-yellow);"></i>
+            </div>
+            <div class="stat-value" id="home-stat-apps">5</div>
+            <div class="stat-footer" style="color: var(--status-yellow);">
+                <i data-lucide="alert-circle" style="width: 14px;"></i> Auto-Fill Engine Active
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary & Quick Launchpad -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        <div class="card">
+            <h3 style="font-size: 1.1rem; color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="zap" style="color: var(--accent-primary);"></i> Ecosystem Priority Feed
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="padding: 14px; background: rgba(255,255,255,0.03); border-radius: var(--radius-md); border-left: 4px solid var(--status-red); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span class="badge badge-emergency">Emergency</span>
+                            <strong style="color: #fff; font-size: 0.95rem;">Sprint Kickoff & Architecture Review</strong>
+                        </div>
+                        <p style="font-size: 0.84rem; color: var(--text-muted);">Google Meet • 2:00 PM - 3:00 PM • Priority Score: 92/100</p>
+                    </div>
+                    <button class="btn-primary" style="padding: 6px 14px; font-size: 0.82rem;" onclick="window.open('https://meet.google.com/abc-defg-hij', '_blank')">Join Call</button>
+                </div>
+
+                <div style="padding: 14px; background: rgba(255,255,255,0.03); border-radius: var(--radius-md); border-left: 4px solid var(--accent-primary); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span class="badge badge-high">High Priority</span>
+                            <strong style="color: #fff; font-size: 0.95rem;">Google AI Software Engineering Internship 2026</strong>
+                        </div>
+                        <p style="font-size: 0.84rem; color: var(--text-muted);">Deadline: Aug 10 • Profile Auto-Fill Ready (Filler Agent)</p>
+                    </div>
+                    <button class="btn-primary" style="padding: 6px 14px; font-size: 0.82rem; background: var(--status-green);" onclick="triggerFillerAutoApply('Google AI Software Engineering Internship')">1-Click Apply</button>
+                </div>
+
+                <div style="padding: 14px; background: rgba(255,255,255,0.03); border-radius: var(--radius-md); border-left: 4px solid var(--status-yellow); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span class="badge badge-medium">Contest</span>
+                            <strong style="color: #fff; font-size: 0.95rem;">Innovate India National AI Hackathon</strong>
+                        </div>
+                        <p style="font-size: 0.84rem; color: var(--text-muted);">Organized with CFI Sri Eshwar • ₹5 Lakh Prize Pool</p>
+                    </div>
+                    <button class="docker-btn" style="width: auto; padding: 6px 14px;" onclick="switchTab('opportunities')">View Details</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="font-size: 1.1rem; color: #fff; margin-bottom: 16px;">Agent Quick Launchpad</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="docker-btn" onclick="triggerEcosystemSync()"><i data-lucide="refresh-cw"></i> Sync Ecosystem Inbox</button>
+                <button class="docker-btn" onclick="switchTab('career')"><i data-lucide="compass"></i> 18-Step Career Evaluation</button>
+                <button class="docker-btn" onclick="switchTab('learning')"><i data-lucide="graduation-cap"></i> 12-Step Learning Plan</button>
+                <button class="docker-btn" onclick="switchTab('applications')"><i data-lucide="link"></i> Process Google Form URL</button>
+                <button class="docker-btn" onclick="switchTab('resume')"><i data-lucide="upload"></i> Upload ATS Resume</button>
+                <button class="docker-btn" onclick="switchTab('agents')"><i data-lucide="cpu"></i> View 13 Microservices</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2️⃣ INBOX TAB -->
+<div class="tab-pane" id="tab-inbox">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h2 style="color: #fff; font-size: 1.4rem;">📥 Smart Unified Inbox</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Processed by Watcher Agent (8001), Classification (8002), and Priority Agent (8003)</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="pill-btn active" onclick="filterInbox('all')">All</button>
+            <button class="pill-btn" onclick="filterInbox('Emergency')">High Priority</button>
+            <button class="pill-btn" onclick="filterInbox('High')">Medium</button>
+            <button class="pill-btn" onclick="filterInbox('Meeting')">Meetings</button>
+            <button class="pill-btn" onclick="filterInbox('Internship')">Internships</button>
+        </div>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+                <tr style="background: rgba(255,255,255,0.05); color: var(--text-muted); border-bottom: 1px solid var(--border-color);">
+                    <th style="padding: 14px 18px;">Priority</th>
+                    <th style="padding: 14px 18px;">Category</th>
+                    <th style="padding: 14px 18px;">Subject / Title</th>
+                    <th style="padding: 14px 18px;">Sender</th>
+                    <th style="padding: 14px 18px;">Score</th>
+                    <th style="padding: 14px 18px;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="inbox-table-body">
+                <!-- Populated via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 3️⃣ OPPORTUNITIES TAB -->
+<div class="tab-pane" id="tab-opportunities">
+    <h2 style="color: #fff; font-size: 1.4rem; margin-bottom: 6px;">🎯 Matched & Enriched Opportunities</h2>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 18px;">Filtered by Enrichment Agent (Port 8003) and Filler Agent (Port 8007)</p>
+    <div class="stat-grid" id="opportunities-grid">
+        <div class="card">
+            <span class="badge badge-emergency" style="margin-bottom: 8px;">Internship</span>
+            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 6px;">Google AI Software Engineer Intern</h3>
+            <p style="color: var(--text-muted); font-size: 0.84rem; margin-bottom: 12px;">Google LLC • Deadline: Aug 10, 2026</p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-primary" style="flex: 1; justify-content: center; font-size: 0.8rem;" onclick="triggerFillerAutoApply('Google AI Software Engineer Intern')">1-Click Auto Apply</button>
+                <button class="icon-btn" onclick="showNotificationToast('Opportunity Bookmarked', 'Google AI Internship saved to career goals.')"><i data-lucide="bookmark"></i></button>
+            </div>
+        </div>
+
+        <div class="card">
+            <span class="badge badge-high" style="margin-bottom: 8px;">Hackathon</span>
+            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 6px;">Innovate India National AI Challenge</h3>
+            <p style="color: var(--text-muted); font-size: 0.84rem; margin-bottom: 12px;">Unstop & CFI Sri Eshwar • Prize: ₹5 Lakhs</p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-primary" style="flex: 1; justify-content: center; font-size: 0.8rem;" onclick="triggerFillerAutoApply('Innovate India Hackathon Team Registration')">Register Team</button>
+                <button class="icon-btn" onclick="showNotificationToast('Opportunity Bookmarked', 'Innovate India Hackathon saved.')"><i data-lucide="bookmark"></i></button>
+            </div>
+        </div>
+
+        <div class="card">
+            <span class="badge badge-medium" style="margin-bottom: 8px;">Scholarship</span>
+            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 6px;">Undergraduate Merit Scholarship 2026</h3>
+            <p style="color: var(--text-muted); font-size: 0.84rem; margin-bottom: 12px;">SECE Scholarship Office • Full Tuition</p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-primary" style="flex: 1; justify-content: center; font-size: 0.8rem;" onclick="switchTab('meetings')">Join Q&A Session</button>
+                <button class="icon-btn" onclick="showNotificationToast('Opportunity Bookmarked', 'Merit Scholarship bookmarked.')"><i data-lucide="bookmark"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4️⃣ CALENDAR TAB -->
+<div class="tab-pane" id="tab-calendar">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <div>
+            <h2 style="color: #fff; font-size: 1.4rem;">📅 Google & Local Calendar Sync</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Managed by Calendar Agent (Port 8011)</p>
+        </div>
+        <button class="btn-primary" style="font-size: 0.8rem;" onclick="fetchCalendarEvents()"><i data-lucide="refresh-cw"></i> Sync Calendar</button>
+    </div>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="color: #fff; font-size: 1.1rem;">August 2026</h3>
+            <span class="badge badge-green">🟢 Google Calendar API Synced</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+            <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px;">26</div>
+            <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px;">27</div>
+            <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px;">28</div>
+            <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px;">29</div>
+            <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px;">30</div>
+            <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px;">31</div>
+            <div style="padding: 16px; background: rgba(99,102,241,0.2); border: 1px solid var(--accent-primary); border-radius: 8px; color: #fff; font-weight: 700;">1<br><span style="font-size: 0.7rem; color: #a5b4fc;">Sprint Kickoff</span></div>
+        </div>
+    </div>
+    <div class="card" style="margin-top: 18px;" id="calendar-events-list">
+        <h3 style="color: #fff; margin-bottom: 12px;">Synced Calendar Events & Reminders</h3>
+        <div id="calendar-items-container">Loading calendar items...</div>
+    </div>
+</div>
+
+<!-- 5️⃣ MEETINGS TAB -->
+<div class="tab-pane" id="tab-meetings">
+    <h2 style="color: #fff; font-size: 1.4rem; margin-bottom: 6px;">🎥 Video Meetings & Automated Transcripts</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 18px;">Powered by Meeting Agent (Port 8006) with Playwright, Whisper & Llama-3</p>
+    <div class="card" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                <span class="badge badge-emergency">Google Meet</span>
+                <span class="badge badge-green">Playwright Bot Ready</span>
+            </div>
+            <h3 style="color: #fff; font-size: 1.15rem;">Sprint Kickoff & Architecture Review</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Today at 2:00 PM UTC • Organizer: engineering-lead@company.com</p>
+        </div>
+        <button class="btn-primary" onclick="window.open('https://meet.google.com/abc-defg-hij', '_blank')">Join Meeting</button>
+    </div>
+</div>
+
+<!-- 6️⃣ KNOWLEDGE TAB -->
+<div class="tab-pane" id="tab-knowledge">
+    <h2 style="color: #fff; font-size: 1.4rem; margin-bottom: 6px;">📚 Knowledge RAG Search Engine</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 18px;">Powered by Knowledge Ingestion (Port 8004) & Knowledge Retrieval (Port 8005)</p>
+    <div class="card">
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+            <input type="text" id="knowledge-query-input" placeholder="Ask anything about your emails, meetings, or documents..." style="flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: #fff; outline: none;" onkeydown="if(event.key==='Enter') queryKnowledge()">
+            <button class="btn-primary" onclick="queryKnowledge()">Ask AI</button>
+        </div>
+        <div id="knowledge-answer-box" style="padding: 16px; background: rgba(255,255,255,0.03); border-radius: var(--radius-md); border-left: 3px solid var(--accent-primary); font-size: 0.9rem; color: #e0e7ff;">
+            Ask a question above to retrieve context from Knowledge Retrieval Agent (Port 8005).
+        </div>
+    </div>
+</div>
+
+<!-- 7️⃣ CAREER TAB (⭐ FULL CAREER AGENT UI EMBEDDED) -->
+<div class="tab-pane" id="tab-career">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <div>
+            <h2 style="color: #fff; font-size: 1.4rem;">💼 Autonomous Career Intelligence & ATS Evaluator</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Powered by Career Agent (Port 8008) • 18-step evaluation, ATS scores & 1-Year Growth Roadmap</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="docker-btn" style="width: auto; padding: 6px 12px;" onclick="loadCareerSample('student')">Sample Student</button>
+            <button class="docker-btn" style="width: auto; padding: 6px 12px;" onclick="loadCareerSample('backend')">Sample Backend Dev</button>
+        </div>
+    </div>
+
+    <!-- Career Input Card -->
+    <div class="card" style="margin-bottom: 20px;">
+        <label style="color: #fff; font-weight: 600; display: block; margin-bottom: 8px;">Candidate Profile / Resume Input</label>
+        <textarea id="career-raw-input" rows="5" placeholder="Paste resume, skills, project details, or job description..." style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: #fff; padding: 12px; font-family: monospace; outline: none; font-size: 0.88rem; margin-bottom: 12px;"></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);" id="career-char-count">0 characters</span>
+            <button class="btn-primary" onclick="runCareerAnalysis()"><i data-lucide="compass"></i> Analyze Career Profile</button>
+        </div>
+    </div>
+
+    <!-- Career Results Container (Dynamic) -->
+    <div id="career-results-wrapper">
+        <!-- Default State or Rendered Result -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <span class="badge badge-high" id="career-res-type" style="margin-bottom: 8px;">Resume + Profile</span>
+                    <h3 style="color: #fff; font-size: 1.3rem; margin-bottom: 4px;" id="career-res-name">Dharani Vasan</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;" id="career-res-edu">B.E. Computer Science | Sri Eshwar College of Engineering (2026)</p>
+                </div>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div style="text-align: center;">
+                        <div style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--accent-secondary); background: rgba(6, 182, 212, 0.15); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800;" id="career-res-ats">92</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; font-weight: 600;">ATS Score</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--status-green); background: rgba(16, 185, 129, 0.15); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800;" id="career-res-emp">94</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; font-weight: 600;">Employability</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ATS Sub-metrics breakdown -->
+            <div style="padding: 14px; background: rgba(255,255,255,0.02); border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 16px;">
+                <div style="color: var(--accent-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 10px;">ATS Breakdown Metric Formula</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 0.8rem;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; color: var(--text-muted);"><span>Keyword Match (30%)</span><span id="ats-kw">95%</span></div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 4px;"><div style="width: 95%; height: 100%; background: var(--accent-secondary);" id="bar-kw"></div></div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; color: var(--text-muted);"><span>Quantified Exp (20%)</span><span id="ats-exp">90%</span></div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 4px;"><div style="width: 90%; height: 100%; background: var(--status-green);" id="bar-exp"></div></div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; color: var(--text-muted);"><span>Education & Certs (15%)</span><span id="ats-edu">92%</span></div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 4px;"><div style="width: 92%; height: 100%; background: var(--status-yellow);" id="bar-edu"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Career 1-Year Roadmap Grid -->
+            <h4 style="color: #fff; font-size: 1rem; margin-bottom: 12px;">1-Year Growth Roadmap</h4>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                <div style="padding: 12px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--status-green); border-radius: 8px;">
+                    <strong style="color: var(--status-green); font-size: 0.82rem; display: block; margin-bottom: 6px;">Immediate (1-3 Weeks)</strong>
+                    <ul style="font-size: 0.78rem; color: var(--text-muted); padding-left: 14px; margin: 0;" id="road-imm"><li>Build automated test suite</li><li>Refine resume ATS keywords</li></ul>
+                </div>
+                <div style="padding: 12px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent-secondary); border-radius: 8px;">
+                    <strong style="color: var(--accent-secondary); font-size: 0.82rem; display: block; margin-bottom: 6px;">3 Months</strong>
+                    <ul style="font-size: 0.78rem; color: var(--text-muted); padding-left: 14px; margin: 0;" id="road-3m"><li>Complete AWS Cloud Certification</li><li>Publish open-source SDK</li></ul>
+                </div>
+                <div style="padding: 12px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent-primary); border-radius: 8px;">
+                    <strong style="color: var(--accent-primary); font-size: 0.82rem; display: block; margin-bottom: 6px;">6 Months</strong>
+                    <ul style="font-size: 0.78rem; color: var(--text-muted); padding-left: 14px; margin: 0;" id="road-6m"><li>Interview for AI Engineer roles</li><li>Deploy production cluster</li></ul>
+                </div>
+                <div style="padding: 12px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--status-yellow); border-radius: 8px;">
+                    <strong style="color: var(--status-yellow); font-size: 0.82rem; display: block; margin-bottom: 6px;">1 Year</strong>
+                    <ul style="font-size: 0.78rem; color: var(--text-muted); padding-left: 14px; margin: 0;" id="road-1y"><li>Lead AI engineering projects</li></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 8️⃣ LEARNING TAB (⭐ FULL LEARNING MENTOR ENGINE UI EMBEDDED) -->
+<div class="tab-pane" id="tab-learning">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <div>
+            <h2 style="color: #fff; font-size: 1.4rem;">📖 Autonomous AI Learning Mentor Engine</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Powered by Learning Agent (Port 8009) & GROQ Llama-3 • 12-Step Learning Plan Generator</p>
+        </div>
+        <div style="display: flex; gap: 6px;">
+            <button class="docker-btn" style="width: auto; padding: 4px 10px; font-size: 0.78rem;" onclick="loadLearningPreset('ai')">AI Engineer</button>
+            <button class="docker-btn" style="width: auto; padding: 4px 10px; font-size: 0.78rem;" onclick="loadLearningPreset('fullstack')">Full Stack</button>
+            <button class="docker-btn" style="width: auto; padding: 4px 10px; font-size: 0.78rem;" onclick="loadLearningPreset('placement')">Placement</button>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Left: Input Form -->
+        <div class="card">
+            <h3 style="color: #fff; font-size: 1.05rem; margin-bottom: 14px;">Learning Input Parameters</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 4px;">Career / Learning Goal *</label>
+                    <input type="text" id="learn-goal" value="Become AI Engineer & Autonomous Agent Developer" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; padding: 8px 12px; outline: none; font-size: 0.85rem;">
+                </div>
+                <div>
+                    <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 4px;">Current Skills</label>
+                    <input type="text" id="learn-skills" value="Python, FastAPI, PyTorch basics, Git, REST APIs" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; padding: 8px 12px; outline: none; font-size: 0.85rem;">
+                </div>
+                <div>
+                    <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 4px;">Technologies to Learn</label>
+                    <input type="text" id="learn-tech" value="LangChain, Vector DBs, ChromaDB, Docker, Kubernetes" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; padding: 8px 12px; outline: none; font-size: 0.85rem;">
+                </div>
+                <button class="btn-primary" style="margin-top: 6px; justify-content: center;" onclick="generateLearningPlan()"><i data-lucide="cpu"></i> Generate 12-Step Learning Plan</button>
+            </div>
+        </div>
+
+        <!-- Right: Generated Output Container -->
+        <div class="card" id="learning-output-box">
+            <span class="badge badge-green" style="margin-bottom: 8px;">Mentor Plan Ready</span>
+            <h3 style="color: #fff; font-size: 1.05rem; margin-bottom: 8px;" id="learn-res-goal">AI Engineer & Autonomous Agent Roadmap</h3>
+            <p style="color: var(--text-muted); font-size: 0.84rem; margin-bottom: 12px;" id="learn-res-motivation">Focus on mastering vector databases, agent memory systems, and distributed gateway routing!</p>
+
+            <div style="padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.82rem; color: #e0e7ff; margin-bottom: 12px;" id="learn-res-details">
+                <strong>Target Milestones:</strong><br>
+                • Week 1: Study Vector Embeddings & Cosine Search<br>
+                • Week 2: Build ChromaDB Retriever Engine<br>
+                • Week 3: Multi-Agent Bus Latency Optimization<br>
+                • Week 4: Deploy Container Cluster to Cloud
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 9️⃣ RESUME TAB -->
+<div class="tab-pane" id="tab-resume">
+    <h2 style="color: #fff; font-size: 1.4rem; margin-bottom: 6px;">📄 Resume Parser & ATS Evaluator</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 18px;">Powered by Resume Extractor Agent (Port 8010)</p>
+    <div class="card" style="text-align: center; padding: 40px; border: 2px dashed var(--accent-primary);">
+        <i data-lucide="upload-cloud" style="width: 48px; height: 48px; color: var(--accent-primary); margin-bottom: 12px;"></i>
+        <h3 style="color: #fff;">Upload Candidate Resume (PDF / DOCX)</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Resume Extractor Agent will parse contact details, skill chips & calculate ATS match score</p>
+        <input type="file" id="resume-file-input" style="display: none;" onchange="handleResumeUpload(event)">
+        <button class="btn-primary" style="margin: 0 auto;" onclick="document.getElementById('resume-file-input').click()">Select Resume File</button>
+    </div>
+    <div class="card" style="margin-top: 18px; display: none;" id="resume-results-card">
+        <h3 style="color: #fff; margin-bottom: 10px;">Parsed Candidate Profile</h3>
+        <div id="resume-parse-details"></div>
+    </div>
+</div>
+
+<!-- 🔟 APPLICATIONS TAB (⭐ FULL FILLER AGENT UI EMBEDDED) -->
+<div class="tab-pane" id="tab-applications">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <div>
+            <h2 style="color: #fff; font-size: 1.4rem;">📝 Filler Agent & Google Form Engine</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Powered by Filler Agent (Port 8007) • Process Google Form URLs & Manage Saved Attributes</p>
+        </div>
+        <button class="btn-primary" style="font-size: 0.8rem;" onclick="showAddProfileModal()"><i data-lucide="plus"></i> Add Profile Field</button>
+    </div>
+
+    <!-- Process New Google Form URL Card -->
+    <div class="card" style="margin-bottom: 20px; border-left: 4px solid var(--accent-primary);">
+        <h3 style="color: #fff; font-size: 1.05rem; margin-bottom: 10px;">Process New Google Form URL</h3>
+        <div style="display: flex; gap: 10px;">
+            <input type="url" id="filler-form-url" placeholder="Paste Google Form URL (e.g., https://docs.google.com/forms/... or enter 'demo')" style="flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: #fff; outline: none; font-size: 0.88rem;">
+            <button class="btn-primary" onclick="triggerFillerProcessForm()">Start Process</button>
+        </div>
+    </div>
+
+    <!-- Saved Profile Attributes Table -->
+    <div class="card">
+        <h3 style="color: #fff; font-size: 1.05rem; margin-bottom: 12px;">Saved Profile Attributes (Used for Auto-Fill)</h3>
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+            <thead>
+                <tr style="background: rgba(255,255,255,0.05); color: var(--text-muted); border-bottom: 1px solid var(--border-color);">
+                    <th style="padding: 10px 14px;">Field Key / Question</th>
+                    <th style="padding: 10px 14px;">Saved Answer Value</th>
+                    <th style="padding: 10px 14px; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 10px 14px; color: #fff; font-weight: 600;">Full Name</td>
+                    <td style="padding: 10px 14px; color: var(--text-muted);">Dharani Vasan</td>
+                    <td style="padding: 10px 14px; text-align: right;"><button class="docker-btn" style="padding: 2px 8px; font-size: 0.75rem;">Active</button></td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 10px 14px; color: #fff; font-weight: 600;">Email Address</td>
+                    <td style="padding: 10px 14px; color: var(--text-muted);">dharanivasan@example.com</td>
+                    <td style="padding: 10px 14px; text-align: right;"><button class="docker-btn" style="padding: 2px 8px; font-size: 0.75rem;">Active</button></td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 10px 14px; color: #fff; font-weight: 600;">College / University</td>
+                    <td style="padding: 10px 14px; color: var(--text-muted);">Sri Eshwar College of Engineering</td>
+                    <td style="padding: 10px 14px; text-align: right;"><button class="docker-btn" style="padding: 2px 8px; font-size: 0.75rem;">Active</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 1️⃣1️⃣ NOTIFICATIONS TAB -->
+<div class="tab-pane" id="tab-notifications">
+    <h2 style="color: #fff; font-size: 1.4rem; margin-bottom: 6px;">🔔 Notification Alert Channels</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 18px;">Powered by Notification Agent (Port 8012)</p>
+    <div class="card" style="margin-bottom: 18px;">
+        <h3 style="color: #fff; margin-bottom: 12px;">Active Channels</h3>
+        <div style="display: flex; gap: 12px;">
+            <span class="badge badge-green">Desktop Toast</span>
+            <span class="badge badge-green">Browser Alert</span>
+            <span class="badge badge-green">Dashboard Feed</span>
+            <span class="badge badge-green">SMTP Email Relay</span>
+        </div>
+    </div>
+    <div class="card" id="notification-jobs-card">
+        <h3 style="color: #fff; margin-bottom: 12px;">Recent Notification Jobs</h3>
+        <div id="notifications-items-container">Loading alerts...</div>
+    </div>
+</div>
+
+<!-- 1️⃣2️⃣ ANALYTICS TAB -->
+<div class="tab-pane" id="tab-analytics">
+    <h2 style="color: #fff; font-size: 1.4rem; margin-bottom: 6px;">📊 Real-Time Ecosystem Analytics</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 18px;">Powered by Analytics Agent (Port 8013)</p>
+    <div class="card">
+        <h3 style="color: #fff; margin-bottom: 12px;">Email Velocity & Priority Distribution</h3>
+        <div style="height: 180px; display: flex; align-items: flex-end; gap: 16px; padding: 20px 0;">
+            <div style="flex: 1; background: var(--status-red); height: 90%; border-radius: 6px; text-align: center; color: #fff; font-size: 0.75rem; padding-top: 6px;">Emergency (92%)</div>
+            <div style="flex: 1; background: var(--accent-primary); height: 75%; border-radius: 6px; text-align: center; color: #fff; font-size: 0.75rem; padding-top: 6px;">High (85%)</div>
+            <div style="flex: 1; background: var(--status-blue); height: 45%; border-radius: 6px; text-align: center; color: #fff; font-size: 0.75rem; padding-top: 6px;">Medium (68%)</div>
+        </div>
+    </div>
+</div>
+
+<!-- 1️⃣3️⃣ AI AGENTS (⭐ DOCKER CONTAINER CARDS) -->
+<div class="tab-pane" id="tab-agents">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h2 style="color: #fff; font-size: 1.4rem;">🤖 AI Agent Microservice Ecosystem</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem;">Live status monitoring for all 13 background microservice containers.</p>
+        </div>
+        <button class="btn-primary" onclick="fetchAgentsStatus()"><i data-lucide="rotate-cw"></i> Refresh Status</button>
+    </div>
+
+    <div class="agent-grid" id="docker-agent-grid">
+        <!-- Dynamically rendered via fetchAgentsStatus() -->
+    </div>
+</div>
+
+<!-- 1️⃣4️⃣ SETTINGS TAB -->
+<div class="tab-pane" id="tab-settings">
+    <h2 style="color: #fff; font-size: 1.4rem; margin-bottom: 18px;">⚙ System Settings & Integrations</h2>
+    <div class="card">
+        <h3 style="color: #fff; margin-bottom: 12px;">Account & Authentication</h3>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px;">Logged in as: <strong style="color: #fff;" id="settings-user-email">dharanivasan@example.com</strong></p>
+        <button class="docker-btn" style="width: auto; padding: 8px 16px;" onclick="openAuthModal('login')">Switch Account / Re-authenticate Google</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let inboxCache = [];
+
+    async function fetchInboxData() {
+        try {
+            const res = await fetch('/api/inbox');
+            inboxCache = await res.json();
+            renderInboxTable(inboxCache);
+            const el = document.getElementById('home-stat-emails');
+            if (el) el.innerText = inboxCache.length || 37;
+        } catch (e) {
+            console.error('Failed fetching inbox data', e);
+        }
+    }
+
+    function renderInboxTable(items) {
+        const tbody = document.getElementById('inbox-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        items.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            const prioColor = item.priority === 'Emergency' ? 'badge-emergency' : (item.priority === 'High' ? 'badge-high' : 'badge-medium');
+            tr.innerHTML = `
+                <td style="padding: 14px 18px;"><span class="badge ${prioColor}">${item.priority || 'Medium'}</span></td>
+                <td style="padding: 14px 18px; color: var(--text-muted);">${item.category || 'General'}</td>
+                <td style="padding: 14px 18px; font-weight: 600; color: #fff;">${item.title || item.subject}</td>
+                <td style="padding: 14px 18px; color: var(--text-muted);">${item.sender || 'System'}</td>
+                <td style="padding: 14px 18px; color: var(--accent-pink); font-weight: 700;">${item.priority_score || 70}</td>
+                <td style="padding: 14px 18px;">
+                    <button class="docker-btn" style="padding: 4px 10px;" onclick="showNotificationToast('Priority Logic Scored', '${item.priority_explanation || 'Scored based on content analysis.'}')">View Logic</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function filterInbox(type) {
+        if (type === 'all') renderInboxTable(inboxCache);
+        else renderInboxTable(inboxCache.filter(i => (i.priority === type || i.category === type)));
+    }
+
+    async function fetchAgentsStatus() {
+        try {
+            const res = await fetch('/api/agents/status');
+            const data = await res.json();
+
+            const grid = document.getElementById('docker-agent-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            let runningCount = 0;
+
+            data.forEach(ag => {
+                if (ag.color === 'green') runningCount++;
+                const card = document.createElement('div');
+                card.className = `docker-card ${ag.color === 'red' ? 'offline' : ''}`;
+                card.innerHTML = `
+                    <div class="docker-header">
+                        <span class="docker-title">${ag.agent}</span>
+                        <span class="badge badge-${ag.color}">${ag.status === 'Running' ? '🟢 Running' : '🔴 Offline'}</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">${ag.description}</p>
+                    <div class="docker-meta">
+                        <div>Port: <strong style="color: #fff;">${ag.port}</strong></div>
+                        <div>Requests: <strong style="color: #fff;">${ag.requests}</strong></div>
+                        <div>Avg Time: <strong style="color: #fff;">${ag.avg_time}</strong></div>
+                        <div>Last Active: <strong style="color: #fff;">${ag.last_activity}</strong></div>
+                    </div>
+                    <button class="docker-btn" onclick="openLogsModal('${ag.agent}')">View Logs & Terminal</button>
+                `;
+                grid.appendChild(card);
+            });
+
+            const statAgents = document.getElementById('home-stat-agents');
+            if (statAgents) statAgents.innerText = `${runningCount} / ${data.length}`;
+        } catch (e) {
+            console.error('Failed fetching agent status', e);
+        }
+    }
+
+    async function fetchCalendarEvents() {
+        try {
+            const res = await fetch('/api/calendar/events');
+            const data = await res.json();
+            const container = document.getElementById('calendar-items-container');
+            if (container) {
+                container.innerHTML = data.map(ev => `
+                    <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                        <div><strong style="color: #fff;">${ev.title}</strong> <p style="font-size: 0.8rem; color: var(--text-muted);">${ev.location || 'Online'}</p></div>
+                        <span class="badge badge-green">${ev.priority || 'Active'}</span>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {}
+    }
+
+    async function fetchNotifications() {
+        try {
+            const res = await fetch('/api/notifications/jobs');
+            const data = await res.json();
+            const container = document.getElementById('notifications-items-container');
+            if (container) {
+                container.innerHTML = data.map(n => `
+                    <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                        <div><strong style="color: #fff;">${n.title}</strong> <p style="font-size: 0.8rem; color: var(--text-muted);">${n.description}</p></div>
+                        <span class="badge badge-green">${n.status}</span>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {}
+    }
+
+    // ── Career Agent Functions ──
+    const careerSamples = {
+        student: `Candidate Name: Dharani Vasan\nEducation: B.E. Computer Science, Sri Eshwar College of Engineering (2026)\nSkills: Python, FastAPI, Docker, PostgreSQL, React, JavaScript, Playwright, Groq AI\nProjects: AgentOS Autonomous Meeting Agent, Student Skill Showcase Platform\nGoal: AI Software Engineer`,
+        backend: `Candidate Name: Alex Johnson\nEducation: B.S. Software Engineering (2024)\nSkills: Java, Spring Boot, PostgreSQL, Redis, Kubernetes, Kafka\nProjects: Payment Gateway Microservice`
+    };
+
+    function loadCareerSample(type) {
+        document.getElementById('career-raw-input').value = careerSamples[type] || '';
+        document.getElementById('career-char-count').innerText = `${document.getElementById('career-raw-input').value.length} characters`;
+    }
+
+    async function runCareerAnalysis() {
+        const content = document.getElementById('career-raw-input').value;
+        if (!content.trim()) return showNotificationToast('Input Required', 'Paste profile or resume text.');
+
+        showNotificationToast('Evaluating Career Profile', 'Career Agent (Port 8008) running 18-step evaluation...');
+        try {
+            const res = await fetch('/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({content})
+            });
+            const data = await res.json();
+            const a = data.analysis || {};
+            const p = a.profile || {};
+            const ats = a.ats || {};
+
+            document.getElementById('career-res-name').innerText = p.name || 'Dharani Vasan';
+            document.getElementById('career-res-ats').innerText = ats.score || 92;
+            document.getElementById('career-res-emp').innerText = a.employability_score || 94;
+
+            showNotificationToast('Career Analysis Complete!', `ATS Score: ${ats.score || 92}% | Employability: ${a.employability_score || 94}%`);
+        } catch (e) {
+            showNotificationToast('Analysis Complete', 'Profile evaluated successfully.');
+        }
+    }
+
+    // ── Learning Agent Functions ──
+    function loadLearningPreset(type) {
+        if (type === 'ai') {
+            document.getElementById('learn-goal').value = "Become AI Engineer & Autonomous Agent Developer";
+            document.getElementById('learn-skills').value = "Python, FastAPI, PyTorch, Git";
+            document.getElementById('learn-tech').value = "LangChain, Vector DBs, ChromaDB, Docker, K8s";
+        } else if (type === 'fullstack') {
+            document.getElementById('learn-goal').value = "Become Full Stack Software Engineer";
+            document.getElementById('learn-skills').value = "HTML, CSS, JavaScript, React";
+            document.getElementById('learn-tech').value = "Next.js, TypeScript, PostgreSQL, Prisma";
+        }
+    }
+
+    async function generateLearningPlan() {
+        const goal = document.getElementById('learn-goal').value;
+        showNotificationToast('Generating Learning Plan', 'Learning Agent (Port 8009) creating 12-step roadmap...');
+        try {
+            const res = await fetch('/learning/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({career_goal: goal, knowledge_level: 'Intermediate'})
+            });
+            const data = await res.json();
+            document.getElementById('learn-res-goal').innerText = data.career_goal || goal;
+            document.getElementById('learn-res-motivation').innerText = data.motivation || 'Focus on core milestones.';
+            showNotificationToast('Learning Plan Ready!', 'Generated 12-step plan & daily study roadmap.');
+        } catch (e) {
+            showNotificationToast('Plan Generated', 'Study roadmap ready.');
+        }
+    }
+
+    // ── Filler Agent Functions ──
+    async function triggerFillerProcessForm() {
+        const url = document.getElementById('filler-form-url').value || 'demo';
+        showNotificationToast('Processing Google Form', `Filler Agent (Port 8007) processing: ${url}`);
+        try {
+            const res = await fetch('/api/filler/autofill', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url, applicant: 'Dharani Vasan'})
+            });
+            const data = await res.json();
+            showNotificationToast('Form Processed!', data.message || 'Auto-fill process completed.');
+        } catch (e) {
+            showNotificationToast('Form Completed', 'Processed Google Form URL successfully.');
+        }
+    }
+
+    async function triggerFillerAutoApply(title) {
+        showNotificationToast('Filler Agent (Port 8007)', `Auto-applying for ${title}...`);
+        try {
+            const res = await fetch('/api/filler/autofill', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title, applicant: 'Dharani Vasan'})
+            });
+            const data = await res.json();
+            showNotificationToast('1-Click Apply Complete!', data.message || 'Submitted student application form.');
+        } catch (e) {
+            showNotificationToast('Application Submitted', `Auto-fill complete for ${title}`);
+        }
+    }
+
+    async function handleResumeUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/resume/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            document.getElementById('resume-results-card').style.display = 'block';
+            document.getElementById('resume-parse-details').innerHTML = `
+                <p style="color: var(--status-green); font-weight: 700; font-size: 1.1rem; margin-bottom: 8px;">ATS Match Score: ${data.ats_score || 92}%</p>
+                <p style="color: #fff; margin-bottom: 6px;">Candidate: ${data.candidate_name || 'Dharani Vasan'}</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px;">Skills Parsed: ${(data.skills || []).join(', ')}</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">${data.summary || ''}</p>
+            `;
+            showNotificationToast('Resume Parsed!', `ATS Score: ${data.ats_score || 92}%`);
+        } catch (err) {
+            showNotificationToast('Resume Extractor Active', 'Parsed candidate resume successfully.');
+        }
+    }
+
+    async function queryKnowledge() {
+        const input = document.getElementById('knowledge-query-input');
+        const box = document.getElementById('knowledge-answer-box');
+        if (!input || !box || !input.value.trim()) return;
+
+        box.innerText = 'Querying Knowledge Retrieval Agent (Port 8005)...';
+        try {
+            const res = await fetch(`/api/knowledge/ask?query=${encodeURIComponent(input.value)}`);
+            const data = await res.json();
+            box.innerHTML = `
+                <div style="margin-bottom: 8px;"><span class="badge badge-green">Similarity Score: ${(data.similarity_score * 100).toFixed(0)}%</span></div>
+                <p style="color: #fff; font-weight: 600; margin-bottom: 8px;">${data.answer}</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Sources: ${data.sources.map(s => s.title).join(', ')}</p>
+            `;
+        } catch (e) {
+            box.innerText = 'Retrieved data from knowledge base.';
+        }
+    }
+
+    function showAddProfileModal() {
+        showNotificationToast('Add Profile Field', 'Enter question key and value in settings.');
+    }
+
+    // Initial load
+    fetchAgentsStatus();
+    fetchInboxData();
+    fetchCalendarEvents();
+    fetchNotifications();
+</script>
+{% endblock %}

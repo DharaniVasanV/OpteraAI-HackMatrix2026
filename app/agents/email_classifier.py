@@ -31,7 +31,7 @@ def classify_email(email: dict) -> Dict[str, object]:
                 "Content-Type": "application/json"
             }
             payload = {
-                "model": "llama-3.1-8b-instant",
+                "model": "openai/gpt-oss-120b",
                 "messages": [{"role": "user", "content": prompt}],
                 "response_format": {"type": "json_object"}
             }
@@ -63,7 +63,7 @@ def classify_email(email: dict) -> Dict[str, object]:
                 "(string: Meeting, Form, Scholarship, Internship, Job, Hackathon, Placement, Contest, Newsletter, Promotional, Personal, Spam).\n\n"
                 f"Email:\n{text}"
             ) 
-            gemini_models = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-3.5-flash", "gemini-1.5-flash"]
+            gemini_models = ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
             content = None
             for model_name in gemini_models:
                 try:

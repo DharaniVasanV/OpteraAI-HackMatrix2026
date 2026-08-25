@@ -1,7 +1,7 @@
 import os
 import uuid
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone as tz, timedelta
 
 from ..auth.google_oauth import GoogleOAuthHandler
@@ -57,7 +57,34 @@ class GoogleCalendarService:
             logger.error(f"Failed to build Google Calendar API client: {e}")
             self.service = None
 
-
+    def fetch_native_events(self, time_min: Optional[datetime] = None, max_results: int = 100) -> List[Dict[str, Any]]:
+        """
+        Fetches events from the user's Google Calendar natively.
+        """
+        if not self.service:
+            return []
+        
+        try:
+            if not time_min:
+                time_min = datetime.now(tz.utc) - timedelta(days=30)
+            
+            now_str = time_min.isoformat()
+            if not now_str.endswith('Z'):
+                now_str = now_str.replace('+00:00', 'Z')
+                
+            events_result = self.service.events().list(
+                calendarId=self.calendar_id, 
+                timeMin=now_str,
+                singleEvents=True,
+                maxResults=max_results,
+                orderBy='startTime'
+            ).execute()
+            
+            return events_result.get('items', [])
+        except Exception as e:
+            logger.error(f"Google Calendar API fetch error: {e}")
+            return []
+            
     def create_event(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Creates an event in Google Calendar primary calendar.

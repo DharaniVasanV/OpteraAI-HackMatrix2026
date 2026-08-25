@@ -21,20 +21,20 @@ class CalendarEventModel(Base):
     source_type = Column(String(50), nullable=False) # meeting_tasks, applications, manual
     source_id = Column(String(100), nullable=True)
     event_type = Column(String(50), nullable=False, default="GENERAL_EVENT") # MEETING, TASK_DEADLINE, APPLICATION_DEADLINE, HACKATHON, INTERNSHIP, CERTIFICATION, GENERAL_EVENT
-    title = Column(String(255), nullable=False)
+    title = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     start_datetime = Column(DateTime(timezone=True), nullable=True)
     end_datetime = Column(DateTime(timezone=True), nullable=True)
     deadline = Column(DateTime(timezone=True), nullable=True)
     all_day = Column(Boolean, default=False, nullable=False)
     timezone = Column(String(50), default="Asia/Kolkata", nullable=False)
-    location = Column(String(255), nullable=True)
-    external_url = Column(String(500), nullable=True)
+    location = Column(Text, nullable=True)
+    external_url = Column(Text, nullable=True)
     priority = Column(String(20), default=None, nullable=True) # LOW, MEDIUM, HIGH, URGENT or null
     status = Column(String(20), default="ACTIVE", nullable=False) # ACTIVE, COMPLETED, CANCELLED
-    google_calendar_id = Column(String(255), nullable=True)
-    google_event_id = Column(String(255), nullable=True)
-    google_event_link = Column(String(500), nullable=True)
+    google_calendar_id = Column(Text, nullable=True)
+    google_event_id = Column(Text, nullable=True)
+    google_event_link = Column(Text, nullable=True)
     sync_status = Column(String(50), default="PENDING", nullable=False) # PENDING, SYNCED, MOCK_SYNCED, ERROR
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)

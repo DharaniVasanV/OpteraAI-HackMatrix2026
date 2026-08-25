@@ -4,35 +4,78 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Main Background: Dark White (slate-50) */
+    --background: 210 20% 98%;
+    /* Dark Heading / Text: Off-Black #1A1D20 */
+    --foreground: 210 10% 11%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 10% 11%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 10% 11%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary Accent: Electric Blue #0066FF */
+    --primary: 216 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Body / Subtitle Text: Dark Slate Gray #4A5568 */
+    --secondary: 216 14% 93%;
+    --secondary-foreground: 218 17% 35%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 216 14% 96%;
+    --muted-foreground: 218 17% 35%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 216 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 216 100% 50%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
+    
+    /* Custom Theme Colors */
+    --color-electric-blue: #0066FF;
+    --color-off-black: #1A1D20;
+    --color-slate-gray: #4A5568;
+    --color-charcoal: #222222;
+    
+    /* SDG Palette */
+    --sdg-health: #2E9A47;
+    --sdg-education: #C5192D;
+    --sdg-gender: #FF3A21;
+    --sdg-energy: #FCC30B;
+    --sdg-inequalities: #DD1367;
+    --sdg-climate: #3F7E44;
+  }
+
+  .dark {
+    --background: 222 47% 11%; /* #0F172A slate-900 */
+    --foreground: 210 40% 98%;
+    --card: 222 47% 14%; /* slate-800 mostly */
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 216 100% 50%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 32% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+    --ring: 216 100% 50%;
+
+    --color-off-black: #FFFFFF;
+    --color-slate-gray: #94A3B8;
   }
 }
 
@@ -41,13 +84,101 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground min-h-screen;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-off-black);
+    letter-spacing: -0.02em;
+  }
+  p {
+    color: var(--color-slate-gray);
   }
 }
 
 .glass-panel {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 24px -4px rgba(0, 102, 255, 0.05), inset 0 0 0 1px rgba(255,255,255,0.4);
 }
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 40px -10px rgba(0, 102, 255, 0.08);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 1.25rem;
+}
+.dark .glass-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 40px -15px rgba(0, 102, 255, 0.15);
+  border-color: rgba(0, 102, 255, 0.2);
+}
+.dark .glass-card:hover {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.btn-primary-custom {
+  background: var(--color-charcoal);
+  color: #FFF;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(34, 34, 34, 0.2);
+}
+.btn-primary-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(34, 34, 34, 0.3);
+  background: #000;
+}
+
+.sdg-health { color: var(--sdg-health); background: rgba(46, 154, 71, 0.1); }
+.sdg-education { color: var(--sdg-education); background: rgba(197, 25, 45, 0.1); }
+.sdg-gender { color: var(--sdg-gender); background: rgba(255, 58, 33, 0.1); }
+.sdg-energy { color: var(--sdg-energy); background: rgba(252, 195, 11, 0.1); }
+.sdg-inequalities { color: var(--sdg-inequalities); background: rgba(221, 19, 103, 0.1); }
+.sdg-climate { color: var(--sdg-climate); background: rgba(63, 126, 68, 0.1); }
+
+/* Global Scrollbar Theme Adjustments */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+

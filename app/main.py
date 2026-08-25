@@ -110,7 +110,7 @@ def get_gemini_status() -> dict:
             import requests
             headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
             payload = {
-                "model": "llama-3.1-8b-instant",
+                "model": "openai/gpt-oss-120b",
                 "messages": [{"role": "user", "content": "Hello"}]
             }
             res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=5)
@@ -131,7 +131,7 @@ def get_gemini_status() -> dict:
         
         client = genai.Client(api_key=api_key)
         # Verify connection with a small text call
-        gemini_models = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-3.5-flash", "gemini-1.5-flash"]
+        gemini_models = ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
         last_error = None
         for model_name in gemini_models:
             try:

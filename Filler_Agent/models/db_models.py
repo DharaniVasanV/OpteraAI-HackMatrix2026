@@ -8,6 +8,7 @@ class UserProfile(Base):
     __tablename__ = "user_profiles"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_email = Column(String(255), index=True, nullable=True)
     field_key = Column(String(255), unique=True, index=True, nullable=False) # e.g. "Full Name", "Email", "Phone"
     field_value = Column(Text, nullable=False)
     category = Column(String(100), default="General")
@@ -67,6 +68,7 @@ class ResumeFile(Base):
     __tablename__ = "resume_files"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_email = Column(String(255), index=True, nullable=True)
     filename = Column(String(255), nullable=False)
     content_type = Column(String(100), default="application/pdf")
     file_data = Column(LargeBinary, nullable=False)  # PDF bytes stored in PostgreSQL
@@ -77,6 +79,7 @@ class SubmissionHistory(Base):
     __tablename__ = "submission_histories"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_email = Column(String(255), index=True, nullable=True)
     session_id = Column(String(64), ForeignKey("form_sessions.id", ondelete="CASCADE"), nullable=False)
     form_url = Column(Text, nullable=False)
     title = Column(String(255), default="Google Form")

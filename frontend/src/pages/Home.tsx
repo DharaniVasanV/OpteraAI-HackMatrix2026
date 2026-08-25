@@ -44,75 +44,80 @@ export default function Home() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Command Center</h1>
-          <p className="text-slate-400">Live AgentOS metrics — real data from your PostgreSQL database.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 mb-2">Command Center</h1>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">Live OpteraAI metrics — real data from your PostgreSQL database.</p>
         </div>
-        <button onClick={connectBot} className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-semibold transition-colors border border-slate-700">
-          <Cpu className="w-4 h-4" /> <span>Connect Bot Session</span>
+        <button onClick={connectBot} className="btn-primary-custom flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap">
+          <Cpu className="w-5 h-5" /> <span>Connect Bot Session</span>
         </button>
       </div>
 
       {/* Stat cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         {cards.map((card, i) => (
-          <div key={i} className={`glass-panel p-6 rounded-xl flex items-center justify-between border border-slate-700/50`}>
-            <div>
-              <p className="text-sm font-medium text-slate-400 mb-1">{card.title}</p>
-              <h3 className="text-3xl font-bold text-white">
-                {stats === null ? <span className="animate-pulse text-slate-600">—</span> : card.value}
-              </h3>
+          <div key={i} className="glass-card p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform cursor-default relative overflow-hidden group">
+            <div className={`absolute top-0 right-0 w-24 h-24 ${card.bg} rounded-bl-full -mr-4 -mt-4 opacity-50 group-hover:scale-110 transition-transform`}></div>
+            <div className="flex justify-between items-start mb-4 relative z-10">
+               <div className={`p-3 rounded-xl ${card.bg} ${card.color} shadow-sm`}>
+                 <card.icon className="w-6 h-6" />
+               </div>
             </div>
-            <div className={`p-4 rounded-full ${card.bg} ${card.color}`}>
-              <card.icon className="w-6 h-6" />
+            <div className="relative z-10">
+              <h3 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-1">
+                {stats === null ? <span className="animate-pulse text-slate-300">—</span> : card.value}
+              </h3>
+              <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{card.title}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Chart + Agent status */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="glass-panel p-6 rounded-xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white">System Activity (7 days)</h3>
+      <div className="grid gap-6 md:grid-cols-5">
+        <div className="glass-card p-6 md:col-span-3">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">System Activity (7 days)</h3>
             <BarChart2 className="w-5 h-5 text-slate-400" />
           </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorEvents" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#0066FF" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#0066FF" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="name" stroke="#475569" />
-                <YAxis stroke="#475569" />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} itemStyle={{ color: '#fff' }} />
-                <Area type="monotone" dataKey="events" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorEvents)" />
+                <XAxis dataKey="name" stroke="#A0AEC0" axisLine={false} tickLine={false} dy={10} />
+                <YAxis stroke="#A0AEC0" axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#fff', borderColor: '#E2E8F0', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} itemStyle={{ color: '#0066FF', fontWeight: 'bold' }} />
+                <Area type="monotone" dataKey="events" stroke="#0066FF" strokeWidth={3} fillOpacity={1} fill="url(#colorEvents)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Agent statuses */}
-        <div className="glass-panel p-6 rounded-xl">
-          <h3 className="text-xl font-bold text-white mb-4">
+        <div className="glass-card p-6 md:col-span-2 flex flex-col h-full">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-5 flex items-center justify-between">
             Agent Microservices
-            <span className="ml-3 text-sm font-normal text-green-400">{onlineCount} / {agents.length} online</span>
+            <span className="text-sm font-bold bg-green-100 dark:bg-green-900/30 text-green-700 px-3 py-1 rounded-full shadow-sm">{onlineCount} / {agents.length} online</span>
           </h3>
-          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+          <div className="flex-1 space-y-3 overflow-y-auto px-1 custom-scrollbar">
             {agents.length === 0 ? (
-              <div className="text-slate-500 animate-pulse">Loading agents...</div>
+              <div className="text-slate-400 animate-pulse text-center mt-10">Fetching status...</div>
             ) : agents.map((agent, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-slate-800/40 rounded-lg">
+              <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-2 h-2 rounded-full ${agent.status === 'Running' ? 'bg-green-500 shadow-[0_0_6px_#10b981]' : 'bg-red-500'}`} />
-                  <span className="font-medium text-white text-sm">{agent.name}</span>
+                  <div className={`w-2.5 h-2.5 rounded-full ${agent.status === 'Running' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`}></div>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{agent.name}</span>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">:{agent.port}</span>
+                <span className={`text-xs font-bold px-2 py-1 rounded-md ${agent.status === 'Running' ? 'bg-green-50 dark:bg-green-900/20 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                  {agent.status}
+                </span>
               </div>
             ))}
           </div>

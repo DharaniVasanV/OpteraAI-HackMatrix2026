@@ -36,7 +36,13 @@ class CalendarRepository:
             CalendarEventModel.user_id == user_id,
             CalendarEventModel.source_type == source_type,
             CalendarEventModel.source_id == source_id,
-            CalendarEventModel.event_type == event_type
+        ).first()
+
+    def get_event_by_google_id(
+        self, google_id: str
+    ) -> Optional[CalendarEventModel]:
+        return self.db.query(CalendarEventModel).filter(
+            CalendarEventModel.google_event_id == google_id
         ).first()
 
     def list_events(

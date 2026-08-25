@@ -17,6 +17,7 @@ class ProfileFieldResponse(BaseModel):
 
 class StartFormRequest(BaseModel):
     form_url: str = Field(..., description="Google Form URL to analyze")
+    user_email: Optional[str] = None
 
 class UpdateMissingInfoRequest(BaseModel):
     answers: Dict[str, str] # question_id -> user answer

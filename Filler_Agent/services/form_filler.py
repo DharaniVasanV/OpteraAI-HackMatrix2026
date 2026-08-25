@@ -10,10 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 def _resolve_file_path(ans: str) -> str:
-    """
-    Resolve a file answer to an absolute disk path.
-    Tries: answer as-is → uploads/basename → uploads/sample_resume.pdf
-    """
     if os.path.isabs(ans) and os.path.exists(ans):
         return ans
     if os.path.exists(ans):
@@ -25,11 +21,6 @@ def _resolve_file_path(ans: str) -> str:
 
 
 def _get_file_path_from_db(ans: str) -> str:
-    """
-    Fetch PDF bytes from PostgreSQL by filename or resume_id,
-    write to a temp file, and return the temp file path.
-    Falls back to disk if not found in DB.
-    """
     try:
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
@@ -41,11 +32,8 @@ def _get_file_path_from_db(ans: str) -> str:
         db = Session()
 
         try:
-            # Try matching by filename (basename of the stored answer)
             filename = os.path.basename(ans.strip())
             resume = db.query(ResumeFile).filter(ResumeFile.filename == filename).order_by(ResumeFile.uploaded_at.desc()).first()
-
-            # Fallback: get the most recently uploaded resume
             if not resume:
                 resume = db.query(ResumeFile).order_by(ResumeFile.uploaded_at.desc()).first()
 
@@ -55,7 +43,7 @@ def _get_file_path_from_db(ans: str) -> str:
                 tmp.write(resume.file_data)
                 tmp.flush()
                 tmp.close()
-                logger.info(f"Loaded '{resume.filename}' from PostgreSQL → temp file: {tmp.name}")
+                logger.info(f"Loaded '{resume.filename}' from PostgreSQL -> temp file: {tmp.name}")
                 return tmp.name
         finally:
             db.close()
@@ -67,71 +55,161 @@ def _get_file_path_from_db(ans: str) -> str:
     return _resolve_file_path(ans)
 
 
-def _run_playwright_sync(form_url: str, questions: List[Dict], fill_mode: str, user_email: str = "default") -> dict:
+def _load_google_cookies() -> list:
+    """Load cookies from google_session.json with correct domain/path fixups for Google Forms."""
+    import json
+
+    # Try the meeting-agent session file first
+    candidates = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "meeting-agent", "google_session.json")),
+        r"E:\AgentOS\meeting-agent\google_session.json",
+    ]
+
+    for session_file in candidates:
+        if os.path.exists(session_file):
+            try:
+                with open(session_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                raw_cookies = data.get("cookies", [])
+                if not raw_cookies:
+                    logger.warning(f"No cookies in {session_file}")
+                    continue
+
+                # Playwright requires specific fields. Fix up domains & remove invalid fields.
+                fixed = []
+                for c in raw_cookies:
+                    name = c.get("name", "")
+                    value = c.get("value", "")
+                    if not name or not value:
+                        continue
+
+                    domain = c.get("domain", ".google.com")
+                    # Ensure domain starts with dot for cross-subdomain cookies
+                    if domain and not domain.startswith(".") and not domain.startswith("accounts"):
+                        domain = "." + domain
+
+                    cookie = {
+                        "name": name,
+                        "value": value,
+                        "domain": domain,
+                        "path": c.get("path", "/"),
+                        "httpOnly": c.get("httpOnly", False),
+                        "secure": c.get("secure", True),
+                    }
+
+                    # Handle expiry — Playwright uses 'expires' as a unix timestamp float
+                    expires = c.get("expires", c.get("expiry", -1))
+                    if expires and expires != -1:
+                        cookie["expires"] = float(expires)
+
+                    # sameSite must be one of Strict, Lax, None, or omitted
+                    same_site = c.get("sameSite", "")
+                    if same_site in ("Strict", "Lax", "None"):
+                        cookie["sameSite"] = same_site
+
+                    fixed.append(cookie)
+
+                logger.info(f"Loaded {len(fixed)} cookies from {session_file}")
+                return fixed
+
+            except Exception as e:
+                logger.error(f"Failed to load session file {session_file}: {e}")
+
+    logger.warning("No valid google_session.json found, proceeding without cookies (will likely hit login).")
+    return []
+
+
+def _run_playwright_sync(form_url: str, questions: list, fill_mode: str, user_email: str = 'default') -> dict:
     async def _core():
+        import asyncio
         from playwright.async_api import async_playwright
-        from services.google_auth import is_google_login_page, google_authenticate
+        import os
+        import logging
+        import tempfile
+        logger = logging.getLogger(__name__)
 
         clean_url = form_url.strip()
         if "/edit" in clean_url:
             clean_url = clean_url.split("/edit")[0] + "/viewform"
 
-        # Collect temp files to clean up after submission
+        # Resolve file paths for file-type questions
         temp_files = []
+        for q in questions:
+            if q.get("field_type") == "file":
+                ans = (q.get("proposed_answer") or q.get("user_answer") or "").strip()
+                if ans:
+                    resolved = _resolve_file_path(ans)
+                    if os.path.exists(resolved):
+                        q["_resolved_disk_path"] = resolved
+                    else:
+                        path_from_db = _get_file_path_from_db(ans)
+                        if path_from_db and os.path.exists(path_from_db):
+                            q["_resolved_disk_path"] = path_from_db
+                            temp_files.append(path_from_db)
 
-        # Look in the meeting-agent directory since that's where the dashboard saves it
-        session_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "meeting-agent", "google_session.json"))
+        # Load cookies from google_session.json
+        google_cookies = _load_google_cookies()
+
         async with async_playwright() as p:
-            import undetected_chromedriver as uc
-            import json
-            
-            # Launch patched Chrome via UC
-            options = uc.ChromeOptions()
-            user_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "meeting-agent", "chrome_profile"))
-            options.add_argument(f"--user-data-dir={user_data_dir}")
-            options.add_argument("--window-size=1280,900")
-            options.add_argument("--disable-infobars")
-            driver = uc.Chrome(options=options)
-            
-            cdp_url = driver.caps.get("goog:chromeOptions", {}).get("debuggerAddress")
-            if not cdp_url:
-                cdp_url = driver.caps.get("goog:chromeOptions", {}).get("debuggerAddress")
-                
-            if fill_mode != "submit":
-                if not hasattr(_run_playwright_sync, 'kept_drivers'):
-                    _run_playwright_sync.kept_drivers = []
-                _run_playwright_sync.kept_drivers.append(driver)
-                
-            context = None
-            browser = None
-            browser = await p.chromium.connect_over_cdp(f"http://{cdp_url}")
-            context = browser.contexts[0]
-            page = context.pages[0] if context.pages else await context.new_page()
+            # Launch a fresh Chromium (NOT Chrome channel — avoids profile lock issues)
+            browser = await p.chromium.launch(
+                headless=False,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-extensions",
+                ]
+            )
 
-            await page.goto(clean_url, wait_until="domcontentloaded", timeout=15000)
-            await page.wait_for_timeout(1500)
+            context = await browser.new_context(
+                viewport={"width": 1280, "height": 900},
+                locale="en-US",
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/127.0.0.0 Safari/537.36"
+                ),
+            )
 
-            page_title = await page.title()
-            if await is_google_login_page(page, page_title):
-                authenticated, auth_error = await google_authenticate(page)
-                if not authenticated:
-                    await context.close()
-                    return {"success": False, "error": auth_error or "Google authentication failed."}
-                await page.wait_for_timeout(4000)
-                try:
-                    await page.wait_for_url(lambda url: "accounts.google.com" not in url, timeout=15000)
-                except Exception:
-                    pass
-                await page.wait_for_timeout(2000)
+            # Inject cookies BEFORE navigating — this is what bypasses login
+            if google_cookies:
+                await context.add_cookies(google_cookies)
+                logger.info(f"Injected {len(google_cookies)} Google session cookies.")
 
-            # Wait for form to load
+            page = await context.new_page()
+
+            # Remove the 'webdriver' flag to evade bot detection
+            await page.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            """)
+
+            await page.goto(clean_url, wait_until="domcontentloaded", timeout=30000)
+            await page.wait_for_timeout(2000)
+
+            # Check if we ended up on a login page despite injecting cookies
+            current_url = page.url.lower()
+            if "accounts.google.com" in current_url and "signin" in current_url:
+                logger.error("Still on Google sign-in page after cookie injection. Session may be expired.")
+                return {
+                    "success": False,
+                    "error": (
+                        "Google session is expired or invalid. "
+                        "Please run the 'Connect Bot Session' step again from the Meeting Agent dashboard "
+                        "to refresh your google_session.json file."
+                    )
+                }
+
+            # Wait for the form to render
             try:
                 await page.wait_for_selector(
                     'span.M7eMe, div[role="listitem"], div.freebirdFormviewerViewItemsItemItem',
-                    timeout=10000
+                    timeout=12000
                 )
             except Exception:
-                pass
+                logger.warning("Form selectors not found in time — proceeding anyway.")
 
             blocks = await page.query_selector_all(
                 'div[role="listitem"], '
@@ -141,7 +219,9 @@ def _run_playwright_sync(form_url: str, questions: List[Dict], fill_mode: str, u
 
             for block in blocks:
                 try:
-                    heading = await block.query_selector('span.M7eMe, div[role="heading"], div.freebirdFormviewerViewItemsItemItemTitle')
+                    heading = await block.query_selector(
+                        'span.M7eMe, div[role="heading"], div.freebirdFormviewerViewItemsItemItemTitle'
+                    )
                     if not heading:
                         continue
                     b_text = (await heading.inner_text()).replace("*", "").strip().lower()
@@ -156,155 +236,87 @@ def _run_playwright_sync(form_url: str, questions: List[Dict], fill_mode: str, u
                         continue
 
                     ans = (target_q.get("proposed_answer") or target_q.get("user_answer") or "").strip()
-                    f_type = target_q.get("field_type", "short_text")
-                    q_t = target_q.get("question_text", "").lower()
                     if not ans:
                         continue
 
-                    if f_type in ["short_text", "paragraph"]:
-                        inp = await block.query_selector('input.whsOnd, input[type="text"], input[type="email"], input[type="url"], textarea')
-                        if inp:
-                            try:
-                                await inp.fill(ans)
-                                await page.wait_for_timeout(200)
-                            except Exception as e:
-                                logger.warning(f"Error filling text: {e}")
+                    f_type = target_q.get("field_type", "short_text")
 
-                    elif f_type in ["date", "time"]:
-                        inp = await block.query_selector('input[type="date"], input[type="time"], input.whsOnd')
-                        if inp:
-                            try:
-                                await inp.fill(ans)
-                                await page.wait_for_timeout(200)
-                            except Exception as e:
-                                pass
-
-                    elif f_type == "radio":
-                        for r in await block.query_selector_all('div[role="radio"]'):
-                            label = await r.evaluate('el => el.getAttribute("aria-label") || el.innerText || ""')
-                            if label and (ans.lower() in label.lower() or label.lower() in ans.lower()):
-                                await r.click()
-                                await page.wait_for_timeout(200)
-                                break
-
-                    elif f_type == "checkbox":
-                        selected = [s.strip().lower() for s in ans.split(",")]
-                        for c in await block.query_selector_all('div[role="checkbox"]'):
-                            label = await c.evaluate('el => el.getAttribute("aria-label") || el.innerText || ""')
-                            if label and any(s in label.lower() for s in selected):
-                                # Check if it is already checked to avoid unchecking it
-                                is_checked = await c.evaluate('el => el.getAttribute("aria-checked") == "true"')
-                                if not is_checked:
-                                    await c.click()
-                                    await page.wait_for_timeout(250)
-
-                    elif f_type == "dropdown":
-                        listbox = await block.query_selector('div[role="listbox"]')
-                        if listbox:
-                            await listbox.click()
-                            await page.wait_for_timeout(400)
-                            for o in await page.query_selector_all('div[role="option"]'):
-                                o_text = await o.inner_text()
-                                if o_text and ans.lower() in o_text.lower():
-                                    await o.click()
-                                    await page.wait_for_timeout(200)
-                                    break
-
-                    elif f_type == "file" or any(k in q_t for k in ["resume", "cv", "upload"]):
-                        # Fetch from PostgreSQL → temp file
-                        file_path = _get_file_path_from_db(ans)
-                        if file_path.startswith(tempfile.gettempdir()):
-                            temp_files.append(file_path)
-                        logger.info(f"Attaching file to form: {file_path}")
-
-                        attached = False
-
-                        # Click "Add file" button to trigger dynamic input[type=file] render
-                        add_btn = await block.query_selector(
-                            'div[role="button"][aria-label*="file" i], '
-                            'div[role="button"]:has-text("Add file")'
+                    if f_type in ["short_text", "paragraph", "date", "time"]:
+                        inp = await block.query_selector(
+                            'input.whsOnd, input[type="text"], input[type="email"], '
+                            'input[type="url"], textarea, input[type="date"], input[type="time"]'
                         )
-                        if add_btn and await add_btn.is_visible():
-                            await add_btn.click()
-                            await page.wait_for_timeout(2000) # Wait a bit longer for the modal/iframe to load
+                        if inp:
+                            await inp.fill(ans)
+                            await page.wait_for_timeout(200)
 
-                        # Now input[type=file] should exist inside the Google Picker iframe
-                        try:
-                            # Google Forms loads the file uploader inside an iframe containing "picker" in the URL/class
-                            picker_frame = page.frame_locator('iframe.picker-frame, iframe[src*="picker"]').first
-                            
-                            # Wait for the file input inside that specific iframe
-                            file_input = picker_frame.locator('input[type="file"]')
-                            
-                            # Sometimes the input is hidden, so state="attached" is better than "visible"
-                            await file_input.wait_for(state="attached", timeout=10000)
-                            
-                            # Upload the file from your DB (which you already saved to tempfile)
-                            await file_input.set_input_files(file_path)
-                            
-                            # Wait a few seconds for the upload to complete and the modal to close automatically
-                            await page.wait_for_timeout(5000) 
-                            
-                            attached = True
-                            logger.info(f"File attached: {file_path}")
-                        except Exception as fe:
-                            logger.warning(f"set_input_files failed inside iframe: {fe}")
+                    elif f_type in ["dropdown", "radio", "checkbox"]:
+                        choices = target_q.get("options", [])
+                        if not choices:
+                            choices = [ans]
+                        
+                        target_answers = [a.strip().lower() for a in ans.split(",")]
 
-                        if not attached:
-                            logger.warning(f"Could not attach file for question: {q_t}")
+                        if f_type == "dropdown":
+                            dd = await block.query_selector('div[role="listbox"]')
+                            if dd:
+                                await dd.click()
+                                await page.wait_for_timeout(500)
+                                opts = await page.query_selector_all('div[role="option"]')
+                                for opt in opts:
+                                    t = (await opt.inner_text()).strip().lower()
+                                    if any(target in t or t in target for target in target_answers):
+                                        await opt.click()
+                                        await page.wait_for_timeout(300)
+                                        break
+                        else:
+                            lbls = await block.query_selector_all('label, div[role="radio"], div[role="checkbox"]')
+                            for lbl in lbls:
+                                t = (await lbl.inner_text()).strip().lower()
+                                if t and any(target == t or target in t for target in target_answers):
+                                    await lbl.click()
+                                    await page.wait_for_timeout(200)
 
-                except Exception as be:
-                    logger.warning(f"Block fill error: {be}")
+                    elif f_type == "file":
+                        f_input = await block.query_selector('input[type="file"]')
+                        if f_input:
+                            disk_path = target_q.get("_resolved_disk_path")
+                            if disk_path and os.path.exists(disk_path):
+                                await f_input.set_input_files(disk_path)
+                                await page.wait_for_timeout(1000)
 
-            step5_msg = "Manual fill complete."
+                except Exception as e:
+                    logger.warning(f"Error processing block: {e}")
+
+            step5_msg = "Form filled (draft mode, not submitted). Browser stays open for review."
             if fill_mode == "auto":
-                # Handle multi-page forms
-                for n_btn in await page.query_selector_all('div[role="button"]:has-text("Next")'):
-                    try:
-                        if await n_btn.is_visible():
-                            await n_btn.click()
-                            await page.wait_for_timeout(2000)
-                    except Exception:
-                        pass
+                await page.wait_for_timeout(1000)
+                submit_btn = await page.query_selector(
+                    'div[role="button"] span.NPEfkd, '
+                    'div[role="button"]:has-text("Submit"), '
+                    'div[role="button"]:has-text("Send")'
+                )
+                if submit_btn:
+                    await submit_btn.click()
+                    await page.wait_for_timeout(3000)
+                    step5_msg = "Form submitted successfully via browser."
+                else:
+                    return {"success": False, "error": "Submit button not found on the form."}
 
-                submitted = False
-                for sel in [
-                    'div[role="button"][aria-label*="Submit"]',
-                    'div[role="button"]:has-text("Submit")',
-                    'span:has-text("Submit")',
-                    'button[type="submit"]',
-                    'input[type="submit"]',
-                ]:
-                    try:
-                        btn = await page.query_selector(sel)
-                        if btn and await btn.is_visible():
-                            await btn.click()
-                            await page.wait_for_timeout(4000)
-                            submitted = True
-                            break
-                    except Exception:
-                        pass
+            # Keep browser open if it's draft mode so the user can review it.
+            # (In auto mode, we just submitted and want to finish the task immediately)
+            if fill_mode == "draft":
+                await asyncio.sleep(450)
 
-                try:
-                    os.makedirs("uploads", exist_ok=True)
-                    await page.screenshot(path="uploads/execution_receipt_latest.png", full_page=True)
-                except Exception as sse:
-                    logger.warning(f"Screenshot: {sse}")
-
-                step5_msg = "Form submitted successfully! Receipt saved." if submitted else "Fields filled. Receipt saved."
-
-            await context.close()
-
-            # Clean up temp files written from PostgreSQL
             for tmp in temp_files:
                 try:
                     os.unlink(tmp)
-                    logger.info(f"Deleted temp file: {tmp}")
                 except Exception:
                     pass
 
             return {"success": True, "step5_msg": step5_msg}
 
+    import asyncio
     return asyncio.run(_core())
 
 
@@ -354,6 +366,8 @@ async def execute_form_filling(form_url: str, questions: List[Dict], fill_mode: 
 
         except Exception as e:
             logger.warning(f"Playwright execution error: {e}")
+            await update_step(3, "error", f"Automation error: {e}")
+            return steps
 
     # Fallback / demo
     await update_step(3, "success", "All form fields populated successfully.")

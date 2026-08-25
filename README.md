@@ -9,7 +9,7 @@
 
 ## **1. Team Details**
 
-**Team Name:** DarkElixir
+**Team Name:** Luminex
 
 **Team Leader:** Dharani Vasan V
 
@@ -145,7 +145,7 @@ OpteraAI is made up of 16 agents.
 
 | 7 | Knowledge Agent | Provide RAG personal knowledge search |
 
-| 8 | Meeting Agent | Automate meetings, generate transcripts |
+| 8 | Meeting Agent | Automate meetings, generate transcripts and answer questions on behalf of user |
 
 | 9 | Career Agent | Provide career guidance |
 
@@ -729,9 +729,9 @@ The vector knowledge layer uses a separate system called ChromaDB.
 
 ## **12. Project Presentation and Demo**
 
-**Live Demo:** YOUR_LIVE_DEMO_LINK
+**Live Demo:** https://drive.google.com/drive/folders/1cVyBKyX5FMpy2AnCwwitJmcTknelBWNu?usp=sharing
 
-**Project Presentation (PPT):** https://drive.google.com/drive/folders/1jCI23z_xEA2_DDKTJCrwOWrJfKlKp4aN?usp=sharing
+**Project Presentation (PPT):** https://drive.google.com/file/d/11ACfN8IMJiITO5oeNDPEqqr3WOxZ4tKB/view?usp=sharing
 
 ---
 

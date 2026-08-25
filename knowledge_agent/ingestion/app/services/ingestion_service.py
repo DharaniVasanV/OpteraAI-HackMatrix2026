@@ -18,7 +18,6 @@ import time
 import uuid
 import re
 from datetime import datetime
-from groq import Groq
 
 from app.config.settings import get_settings
 from app.services.cleaner import clean_text
@@ -79,34 +78,30 @@ async def process_document_ingestion(raw_input: str, user_id: str = "user_defaul
             "reason": "Document text cleaning resulted in empty content."
         }
 
-    # STEP 1, 3, 4, 5: Metadata, Type, Tags, Keywords via LLM
-    doc_type = "Notes"
-    title = clean_content.splitlines()[0][:80] if clean_content else "Untitled Knowledge Document"
-    tags = ["Notes", "AgentOS", "Knowledge"]
-    keywords = [w for w in set(re.findall(r"\w+", clean_content[:500])) if len(w) > 4][:20]
+    # STEP 1, 3, 4, 5: Metadata, Type, Tags, Keywords — pure text extraction (no LLM cost)
+    first_line = clean_content.splitlines()[0][:80] if clean_content else "Untitled Knowledge Document"
+    title = first_line.strip() or "Untitled Knowledge Document"
 
-    api_key = settings.effective_groq_key
-    if api_key:
-        try:
-            logger.info("Extracting document type, metadata, tags, and keywords via Groq API...")
-            client = Groq(api_key=api_key)
-            res = client.chat.completions.create(
-                model=settings.GROQ_CHAT_MODEL,
-                messages=[
-                    {"role": "system", "content": EXTRACTION_PROMPT},
-                    {"role": "user", "content": clean_content[:3000]}
-                ],
-                temperature=0.1,
-                response_format={"type": "json_object"}
-            )
-            if res.choices and res.choices[0].message.content:
-                data = clean_json_response(res.choices[0].message.content)
-                doc_type = data.get("document_type", doc_type)
-                title = data.get("title", title)
-                tags = data.get("semantic_tags", tags)
-                keywords = data.get("keywords", keywords)
-        except Exception as e:
-            logger.warning("Groq API metadata extraction fallback used (%s).", e)
+    # Infer document type from source_agent or content
+    source_lower = (source_agent or "").lower()
+    if "career" in source_lower:
+        doc_type = "Career Report"
+    elif "learning" in source_lower:
+        doc_type = "Learning Report"
+    elif "resume" in source_lower:
+        doc_type = "Resume"
+    elif "meeting" in source_lower:
+        doc_type = "Transcript"
+    elif "email" in source_lower:
+        doc_type = "Email"
+    else:
+        doc_type = "Notes"
+
+    # Simple keyword extraction from content
+    all_words = re.findall(r"\b[A-Za-z][a-zA-Z0-9]{3,}\b", clean_content[:2000])
+    stop_words = {"that", "this", "with", "from", "have", "been", "will", "your", "their", "which", "about", "more", "also", "into", "than", "some", "over", "other", "they", "what", "when", "where", "through"}
+    keywords = list(dict.fromkeys(w.lower() for w in all_words if w.lower() not in stop_words))[:30]
+    tags = [source_agent or "Knowledge", doc_type, "AgentOS"]
 
     metadata = {
         "document_id": str(document_id),

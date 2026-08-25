@@ -55,7 +55,7 @@ async def start_form_analysis(payload: StartFormRequest, request: Request, db: S
     
     # Get user email from session
     user = request.session.get("user") or {}
-    user_email = user.get("email", "default")
+    user_email = payload.user_email or user.get("email", "default")
     
     try:
         session = await FillerAgent.create_and_analyze_session(db, form_url, user_email)
@@ -63,6 +63,53 @@ async def start_form_analysis(payload: StartFormRequest, request: Request, db: S
         raise HTTPException(status_code=400, detail=str(ve))
     next_url = f"/missing_info/{session.id}" if session.status == "missing_info" else f"/review/{session.id}"
     return {"session_id": session.id, "status": session.status, "redirect_url": next_url}
+
+
+@router.get("/session/{session_id}")
+async def get_session(session_id: str, request: Request, db: Session = Depends(get_db)):
+    session = db.query(FormSession).filter(FormSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    user = request.session.get("user") or {}
+    user_email = user.get("email", "default")
+    
+    # Auto-patch cached stale answers (like Email and Name) against the freshest UserProfile
+    from agents.filler_agent import FillerAgent
+    FillerAgent._sync_resume_to_profile(db, user_email)
+    
+    profile_email = db.query(UserProfile).filter(UserProfile.field_key == "Email Address").first()
+    profile_name = db.query(UserProfile).filter(UserProfile.field_key == "Full Name").first()
+    
+    for q in session.questions:
+        q_lower = (q.question_text or "").lower()
+        if profile_email and ("email" in q_lower or "e-mail" in q_lower):
+            q.proposed_answer = profile_email.field_value
+            q.user_answer = profile_email.field_value
+        elif profile_name and ("name" in q_lower and "first" not in q_lower and "last" not in q_lower):
+            q.proposed_answer = profile_name.field_value
+            q.user_answer = profile_name.field_value
+    db.commit()
+
+    return {
+        "id": session.id,
+        "form_url": session.form_url,
+        "title": session.title,
+        "status": session.status,
+        "questions": [
+            {
+                "id": q.id,
+                "question_text": q.question_text,
+                "field_type": q.field_type,
+                "options": eval(q.options) if q.options else [],
+                "is_required": q.is_required,
+                "proposed_answer": q.proposed_answer,
+                "is_missing": q.is_missing
+            }
+            for q in session.questions
+        ]
+    }
+
 
 
 def profile_to_dict(profile: UserProfile):
@@ -144,6 +191,7 @@ async def update_review(session_id: str, payload: UpdateReviewRequest, db: Sessi
         summary_map = {q.question_text: (q.user_answer or q.proposed_answer or "N/A") for q in session.questions}
         submission = SubmissionHistory(
             session_id=session_id,
+            user_email=session.id.split("_")[0] if session else "default", # Use session metadata if needed, but wait!
             form_url=session.form_url,
             title=session.title,
             status="completed",
@@ -204,8 +252,11 @@ async def stream_execution(session_id: str, request: Request, db: Session = Depe
     )
 
 @router.get("/history")
-async def get_history(db: Session = Depends(get_db)):
-    history = db.query(SubmissionHistory).order_by(SubmissionHistory.submitted_at.desc()).limit(50).all()
+async def get_history(user_email: str = None, db: Session = Depends(get_db)):
+    query = db.query(SubmissionHistory).order_by(SubmissionHistory.submitted_at.desc())
+    if user_email:
+        query = query.filter(SubmissionHistory.user_email == user_email)
+    history = query.limit(50).all()
     out = []
     for h in history:
         out.append({

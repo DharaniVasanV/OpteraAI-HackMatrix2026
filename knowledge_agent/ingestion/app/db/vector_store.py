@@ -16,7 +16,8 @@ settings = get_settings()
 
 _CHROMA_CLIENT = None
 _COLLECTION = None
-JSON_STORE_FILE = "e:/meeting-agent/knowledge_agent/ingestion/chroma_db/knowledge_store.json"
+# Simple JSON-based vector store fallback
+JSON_STORE_FILE = r"E:\AgentOS\knowledge_agent\ingestion\chroma_db\knowledge_store.json"
 
 
 def get_vector_collection():

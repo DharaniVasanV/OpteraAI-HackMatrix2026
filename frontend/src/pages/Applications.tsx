@@ -22,29 +22,29 @@ export default function Applications() {
   };
 
   return (
-    <div className="p-8 text-white max-w-7xl mx-auto space-y-8 overflow-y-auto h-full">
+    <div className="p-8 text-gray-900 dark:text-gray-100 max-w-7xl mx-auto space-y-8 overflow-y-auto h-full">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent flex items-center gap-3">
             <FormInput className="w-10 h-10 text-emerald-400" />
             Auto-Applications
           </h1>
-          <p className="text-slate-400">View and track automated form submissions by the Filler Agent.</p>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">View and track automated form submissions by the Filler Agent.</p>
         </div>
       </div>
 
-      <div className="glass-panel rounded-xl border border-slate-800 overflow-hidden">
+      <div className="glass-card rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-400">Loading applications...</div>
+          <div className="p-8 text-center text-gray-600 dark:text-gray-300 font-medium">Loading applications...</div>
         ) : history.length === 0 ? (
-          <div className="p-8 text-center text-slate-400">No applications submitted yet.</div>
+          <div className="p-8 text-center text-gray-600 dark:text-gray-300 font-medium">No applications submitted yet.</div>
         ) : (
           <div className="divide-y divide-slate-800">
             {history.map((app: any) => (
-              <div key={app.id} className="p-6 hover:bg-slate-800/30 transition-colors">
+              <div key={app.id} className="p-6 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/30 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white break-words">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 break-words">
                       {app.title || "Untitled Application Form"}
                     </h3>
                     <a 
@@ -59,9 +59,9 @@ export default function Applications() {
                     {app.summary_json && (
                       <div className="mt-4 grid grid-cols-2 gap-4 text-sm max-w-3xl">
                         {Object.entries(app.summary_json).map(([key, val]) => (
-                          <div key={key} className="bg-slate-900/50 p-2 rounded border border-slate-800/50">
-                            <div className="text-xs text-slate-500 truncate">{key}</div>
-                            <div className="text-slate-300 truncate" title={String(val)}>{String(val)}</div>
+                          <div key={key} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm/50 p-2 rounded border border-slate-200 dark:border-slate-700/50">
+                            <div className="text-xs text-slate-400 dark:text-slate-400 font-semibold truncate">{key}</div>
+                            <div className="text-gray-900 dark:text-gray-100 font-bold truncate" title={String(val)}>{String(val)}</div>
                           </div>
                         ))}
                       </div>
@@ -79,7 +79,7 @@ export default function Applications() {
                        <Clock className="w-3.5 h-3.5" />}
                       {app.status.toUpperCase()}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-400 dark:text-slate-400 font-semibold">
                       {app.submitted_at ? new Date(app.submitted_at).toLocaleString() : 'N/A'}
                     </span>
                   </div>

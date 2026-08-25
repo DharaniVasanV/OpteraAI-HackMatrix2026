@@ -16,7 +16,7 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 settings = get_settings()
 
-JSON_STORE_FILE = "e:/meeting-agent/knowledge_agent/ingestion/chroma_db/knowledge_store.json"
+JSON_STORE_FILE = r"E:\AgentOS\knowledge_agent\ingestion\chroma_db\knowledge_store.json"
 
 
 def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
@@ -31,7 +31,8 @@ def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
 
 
 def keyword_overlap_score(query: str, text: str) -> float:
-    query_words = set(re.findall(r"\w+", query.lower()))
+    stop_words = {"what", "is", "the", "of", "a", "an", "in", "to", "for", "and", "on", "how", "why", "are", "do", "does", "did", "my", "your", "his", "her", "their", "our", "me", "show"}
+    query_words = set(re.findall(r"\w+", query.lower())) - stop_words
     text_words = set(re.findall(r"\w+", text.lower()))
     if not query_words:
         return 0.0

@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:vasan5707@localhost:5432/meeting_agent_new"
     GROQ_API_KEY4: str = ""
     GROQ_API_KEY: str = ""
-    GROQ_CHAT_MODEL: str = "llama-3.3-70b-versatile"
-    CHROMA_PERSIST_DIR: str = "e:/meeting-agent/knowledge_agent/ingestion/chroma_db"
+    GROQ_CHAT_MODEL: str = "openai/gpt-oss-120b"
+    CHROMA_PERSIST_DIR: str = r"E:\AgentOS\knowledge_agent\ingestion\chroma_db"
     CHUNK_SIZE_WORDS: int = 700
     CHUNK_OVERLAP_WORDS: int = 120
     LOG_LEVEL: str = "INFO"

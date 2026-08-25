@@ -345,67 +345,111 @@ async def is_meeting_active(page: Page | None, platform: str) -> bool:
     return False
 
 async def connect_bot_session() -> str:
+    """
+    Opens a visible browser window so the user can log in to Google manually.
+    Once sign-in is detected (SID / HSID cookies appear), saves the session
+    to google_session.json in Playwright storage_state format.
+    Uses pure Playwright — no undetected_chromedriver / ChromeDriver needed.
+    """
     import os
     import json
-    import base64
-    import time
     import asyncio
-    import undetected_chromedriver as uc
-    
-    session_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "google_session.json"))
+    from playwright.async_api import async_playwright
 
-    def run_uc():
-        logger.info("Starting undetected-chromedriver for foolproof Google Auth bypass...")
-        user_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "chrome_profile"))
-        options = uc.ChromeOptions()
-        options.add_argument("--disable-infobars")
-        options.add_argument(f"--user-data-dir={user_data_dir}")
-        # Ensure it works identically across all Windows machines globally without showing detection bars
-        driver = uc.Chrome(options=options, use_subprocess=True)
-        driver.get("https://accounts.google.com/signin")
-        
+    session_file = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "google_session.json")
+    )
+
+    logger.info("Opening browser for Google sign-in (Playwright)...")
+
+    async with async_playwright() as p:
+        # Try real Chrome first, fall back to Playwright's bundled Chromium
+        try:
+            browser = await p.chromium.launch(
+                channel="chrome",
+                headless=False,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                ],
+            )
+        except Exception:
+            browser = await p.chromium.launch(
+                headless=False,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                ],
+            )
+
+        context = await browser.new_context(
+            viewport={"width": 1280, "height": 900},
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/127.0.0.0 Safari/537.36"
+            ),
+        )
+        page = await context.new_page()
+
+        # Bypass webdriver flag detection
+        await page.add_init_script(
+            "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });"
+        )
+
+        await page.goto("https://accounts.google.com/signin", wait_until="domcontentloaded")
+        logger.info("Browser opened. Waiting for user to complete Google sign-in (up to 3 minutes)...")
+
+        # Poll every second for auth cookies for up to 180 seconds
+        signed_in = False
         for _ in range(180):
+            await asyncio.sleep(1)
             try:
-                time.sleep(1)
-                cookies = driver.get_cookies()
-                cookie_names = [c.get("name", "") for c in cookies]
-                if any(k in cookie_names for k in ["SID", "HSID", "SSID"]) and ("myaccount.google.com" in driver.current_url or "google.com" in driver.current_url):
-                    logger.info("Detected successful Google sign-in via undetected-chromedriver!")
-                    time.sleep(1.5)
-                    
-                    # Convert to Playwright's format standard seamlessly
-                    pw_cookies = []
-                    for c in driver.get_cookies():
-                        if "expiry" in c:
-                            c["expires"] = c.pop("expiry")
-                        c["sameSite"] = "None"
-                        if "httpOnly" in c:
-                            c["httpOnly"] = c["httpOnly"]
-                        if "secure" in c:
-                            c["secure"] = True # Auth cookies generally need secure=True with sameSite=None
-                        pw_cookies.append(c)
-                    
-                    state = {"cookies": pw_cookies, "origins": []}
-                    os.makedirs(os.path.dirname(session_file), exist_ok=True)
-                    with open(session_file, "w") as f:
-                        json.dump(state, f)
+                cookies = await context.cookies()
+                cookie_names = [c["name"] for c in cookies]
+                current_url = page.url.lower()
+                if (
+                    any(k in cookie_names for k in ["SID", "HSID", "SSID", "__Secure-1PSID"])
+                    and "accounts.google.com" not in current_url
+                ):
+                    logger.info("Google sign-in detected! Saving session...")
+                    signed_in = True
+                    await asyncio.sleep(1.5)
                     break
             except Exception:
                 pass
-        
-        try:
-            driver.quit()
-        except:
-            pass
 
-    # We must run UC in a thread to unblock FastAPI's asyncio loop since selenium handles logic synchronously
-    await asyncio.to_thread(run_uc)
+        if not signed_in:
+            await browser.close()
+            raise RuntimeError(
+                "Sign-in timed out after 3 minutes. Please try again and complete the login promptly."
+            )
 
-    try:
-        with open(session_file, "rb") as f:
-            os.environ["GOOGLE_SESSION_B64"] = base64.b64encode(f.read()).decode("utf-8")
-    except Exception:
-        pass
+        # Save in Playwright storage_state format (compatible with add_cookies)
+        cookies = await context.cookies()
+        fixed_cookies = []
+        for c in cookies:
+            cookie = {
+                "name": c["name"],
+                "value": c["value"],
+                "domain": c.get("domain", ".google.com"),
+                "path": c.get("path", "/"),
+                "httpOnly": c.get("httpOnly", False),
+                "secure": c.get("secure", True),
+                "sameSite": c.get("sameSite", "None") if c.get("sameSite") in ("Strict", "Lax", "None") else "None",
+            }
+            if c.get("expires") and c["expires"] > 0:
+                cookie["expires"] = c["expires"]
+            fixed_cookies.append(cookie)
 
-    logger.info("Saved Google session to %s", session_file)
+        state = {"cookies": fixed_cookies, "origins": []}
+        os.makedirs(os.path.dirname(session_file), exist_ok=True)
+        with open(session_file, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+
+        await browser.close()
+
+    logger.info("Google session saved to %s (%d cookies)", session_file, len(fixed_cookies))
     return session_file

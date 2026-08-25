@@ -41,8 +41,11 @@ def extract_meeting(email: dict) -> Dict[str, object]:
                 "Content-Type": "application/json"
             }
             payload = {
-                "model": "llama-3.1-8b-instant",
-                "messages": [{"role": "user", "content": prompt}],
+                "model": "openai/gpt-oss-120b",
+                "messages": [
+                    {"role": "system", "content": "You are a precise data extractor."},
+                    {"role": "user", "content": prompt}
+                ],
                 "response_format": {"type": "json_object"}
             }
             res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=10)
@@ -77,7 +80,7 @@ def extract_meeting(email: dict) -> Dict[str, object]:
                 "'time_zone' (string or null), 'status' ('scheduled', 'updated', or 'cancelled').\n\n"
                 f"Email Content:\n{full_text}"
             )
-            gemini_models = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-3.5-flash", "gemini-1.5-flash"]
+            gemini_models = ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
             content = None
             for model_name in gemini_models:
                 try:

@@ -34,6 +34,8 @@ def _live_summary(period: str = "week", user_id: str = None) -> dict:
         since = datetime.combine(today, datetime.min.time())
     elif period == "month":
         since = datetime.combine(today - timedelta(days=29), datetime.min.time())
+    elif period == "total":
+        since = datetime(2000, 1, 1)
     else:  # week
         since = datetime.combine(today - timedelta(days=6), datetime.min.time())
 
@@ -41,6 +43,7 @@ def _live_summary(period: str = "week", user_id: str = None) -> dict:
         "meetings": 0, "emails": 0, "career_analyses": 0,
         "learning_plans": 0, "notifications": 0,
         "meeting_minutes": 0,
+        "tasks_completed": 0, "tasks_overdue": 0, "tasks_total": 0
     }
     try:
         conn = _pg_conn()
@@ -48,10 +51,17 @@ def _live_summary(period: str = "week", user_id: str = None) -> dict:
 
         # Meetings
         if user_id:
-            cur.execute("SELECT COUNT(*) FROM watcher_items WHERE created_at >= %s AND user_email = %s", (since, user_id))
+            cur.execute("SELECT COUNT(*) FROM watcher_items WHERE created_at >= %s AND user_email = %s AND category ILIKE '%%meeting%%'", (since, user_id))
         else:
-            cur.execute("SELECT COUNT(*) FROM watcher_items WHERE created_at >= %s", (since,))
+            cur.execute("SELECT COUNT(*) FROM watcher_items WHERE created_at >= %s AND category ILIKE '%%meeting%%'", (since,))
         row = cur.fetchone(); summary["meetings"] = row[0] if row else 0
+
+        # Emails Processing
+        if user_id:
+            cur.execute("SELECT COUNT(*) FROM watcher_items WHERE created_at >= %s AND user_email = %s AND category NOT ILIKE '%%meeting%%'", (since, user_id))
+        else:
+            cur.execute("SELECT COUNT(*) FROM watcher_items WHERE created_at >= %s AND category NOT ILIKE '%%meeting%%'", (since,))
+        row = cur.fetchone(); summary["emails"] = row[0] if row else 0
 
         # Career analyses
         if user_id:
@@ -105,13 +115,24 @@ def get_analytics_dashboard_data(
 
     # Always enrich with live PostgreSQL counts
     live = _live_summary(filter_period, user_id)
-    # Override with real data even if analytics DB events table is empty
-    if not result.has_data or result.meeting.total_meetings == 0:
-        result.meeting.total_meetings = live["meetings"]
-        result.meeting.total_duration_minutes = live["meeting_minutes"]
-    if not result.has_data or result.career.career_activity_count == 0:
-        result.career.career_activity_count = live["career_analyses"]
-        result.career.applications_submitted = live["career_analyses"]
+    # Override with real data
+    result.meeting.total_meetings = live["meetings"]
+    result.meeting.total_duration_minutes = live["meeting_minutes"]
+    result.email.total_processed = live["emails"]
+    result.career.career_activity_count = live["career_analyses"]
+    result.career.applications_submitted = live["career_analyses"]
+    result.task.completed = live["tasks_completed"]
+    result.task.overdue = live["tasks_overdue"]
+    result.task.total = live["tasks_total"]
+    
+    # Recalculate Productivity Score dynamically via live proxy
+    calc_score = 0
+    if live["meetings"] > 0: calc_score += min(20, live["meetings"] * 5)
+    if live["emails"] > 0: calc_score += min(30, live["emails"] * 2)
+    if live["career_analyses"] > 0: calc_score += 25
+    if live["learning_plans"] > 0: calc_score += 25
+    
+    result.productivity_score = max(result.productivity_score, min(100.0, float(calc_score)))
 
     # Mark has_data true if we have any real data
     if any(v > 0 for v in live.values()):

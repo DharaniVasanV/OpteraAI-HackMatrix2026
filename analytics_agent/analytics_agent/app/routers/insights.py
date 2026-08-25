@@ -9,6 +9,8 @@ from analytics_agent.app.groq_service import generate_ai_insights
 
 router = APIRouter(prefix="/api/insights", tags=["AI Insights"])
 
+from analytics_agent.app.routers.analytics import get_analytics_dashboard_data
+
 @router.get("", response_model=AIInsightsResponse)
 def get_ai_insights_data(
     user_id: str = Query("user_1"),
@@ -17,11 +19,12 @@ def get_ai_insights_data(
     end_date: Optional[date] = Query(None),
     db: Session = Depends(get_db)
 ):
-    metrics = get_dashboard_analytics(
-        db=db,
+    # Fetch exactly the same enriched dashboard data so Groq gets correct values
+    metrics = get_analytics_dashboard_data(
         user_id=user_id,
         filter_period=filter_period,
-        custom_start=start_date,
-        custom_end=end_date
+        start_date=start_date,
+        end_date=end_date,
+        db=db
     )
     return generate_ai_insights(metrics)

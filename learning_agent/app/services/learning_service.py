@@ -6,12 +6,15 @@ Learning Agent Version 1.0 - 12-Step Autonomous AI Learning Mentor Engine.
 
 import json
 import os
+import sys
 import uuid
 import httpx
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+sys.path.insert(0, r"E:\AgentOS")
+from groq_rotation import groq_chat_with_rotation
 
 from app.config.settings import settings
 from app.db import models
@@ -121,55 +124,17 @@ Custom Prompt (PRIORITIZE THIS IF PROVIDED): {prompt}
 
 Generate the complete 12-Step Learning Plan in strict JSON format."""
 
-        # ── Step 4: Groq API Key Rotation ─────────────────────────────────────
-        candidate_keys = [
-            settings.GROQ_API_KEY6,
-            settings.GROQ_API_KEY,
-            os.getenv("GROQ_API_KEY5", ""),
-            os.getenv("GROQ_API_KEY4", ""),
-            os.getenv("GROQ_API_KEY3", ""),
-            os.getenv("GROQ_API_KEY2", ""),
-        ]
-        api_keys = [k for k in candidate_keys if k and k.strip()]
-
-        if not api_keys:
-            logger.error("No Groq API keys are configured in .env!")
-            return {"status": "failed", "reason": "No Groq API key available in configuration."}
-
-        # ── Step 5: Call Groq with key rotation on 429 ────────────────────────
-        response = None
-        async with httpx.AsyncClient(timeout=45.0) as client:
-            for api_key in api_keys:
-                response = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": settings.GROQ_CHAT_MODEL,
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": user_prompt},
-                        ],
-                        "temperature": 0.3,
-                        "response_format": {"type": "json_object"},
-                    },
-                )
-                if response.status_code == 429:
-                    logger.warning("Key rate-limited (429), trying next key...")
-                    continue
-                break  # success or hard error
-
-        if response is None or response.status_code != 200:
-            err_code = response.status_code if response else "no_response"
-            logger.error(f"All Groq keys exhausted. Last HTTP status: {err_code}")
-            return {"status": "failed", "reason": f"Groq API returned HTTP {err_code}. All keys may be rate-limited."}
-
-        # ── Step 6: Parse Response ────────────────────────────────────────────
-        res_data    = response.json()
-        raw_content = res_data["choices"][0]["message"]["content"]
-        plan_json   = json.loads(raw_content)
+        # ── Step 4 & 5: Call Groq with shared key+model rotation ─────────────
+        raw_content = await groq_chat_with_rotation(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            max_tokens=3000,
+        )
+        plan_json = json.loads(raw_content)
 
         # ── Step 7: Attach metadata ───────────────────────────────────────────
         plan_id = str(uuid.uuid4())

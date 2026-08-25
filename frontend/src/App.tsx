@@ -4,7 +4,6 @@ import Layout from './components/Layout';
 import AuthLayout from './components/AuthLayout';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import Home from './pages/Home';
 import Inbox from './pages/Inbox';
 import Opportunities from './pages/Opportunities';
 import Meetings from './pages/Meetings';
@@ -33,7 +32,7 @@ function App() {
 
           {/* Protected Routes */}
           <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
+            <Route index element={<Navigate to="/inbox" replace />} />
             <Route path="inbox" element={<Inbox />} />
             <Route path="opportunities" element={<Opportunities />} />
             <Route path="meetings" element={<Meetings />} />
@@ -47,7 +46,7 @@ function App() {
             <Route path="analytics" element={<Analytics />} />
             <Route path="agents" element={<Agents />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/inbox" replace />} />
           </Route>
         </Routes>
       </AuthProvider>

@@ -36,11 +36,10 @@ def get_all_groq_keys() -> List[str]:
 
 
 GROQ_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.3-70b-specdec",
-    "llama3-70b-8192",
-    "llama3-8b-8192",
-    "gemma2-9b-it",
+    "openai/gpt-oss-120b",
+    "meta-llama/llama-prompt-guard-2-86m",
+    "qwen/qwen3.6-27b",
+    "openai/gpt-oss-safeguard-20b"
 ]
 
 

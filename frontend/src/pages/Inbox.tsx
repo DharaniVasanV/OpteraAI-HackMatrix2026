@@ -12,7 +12,7 @@ export default function Inbox() {
 
   const [categories, setCategories] = useState<string[]>(['ALL', 'Meeting', 'Form', 'Scholarship', 'Internship', 'Placement', 'Contest', 'Leetcode', 'CFI']);
   const [newCatName, setNewCatName] = useState('');
-  const [showCatInput, setShowCatInput] = useState(false);
+  const [editMode, setEditMode] = useState<'idle'|'options'|'add'|'delete'>('idle');
 
   useEffect(() => {
     axios.get('/api/categories').then(res => {
@@ -31,13 +31,25 @@ export default function Inbox() {
       const res = await axios.post('/api/categories', { name: newCatName.trim() });
       if (res.data?.name) {
         setCategories(prev => Array.from(new Set([...prev, res.data.name])));
-        setShowCatInput(false);
+        setEditMode('idle');
         setNewCatName('');
         setActiveCategory(res.data.name);
       }
     } catch (e) {
       console.error(e);
       alert('Failed to add custom category');
+    }
+  };
+
+  const handleDeleteCategory = async (catName: string) => {
+    try {
+      await axios.delete(`/api/categories/${catName}`);
+      setCategories(prev => prev.filter(c => c !== catName));
+      if (activeCategory === catName) setActiveCategory('ALL');
+    } catch (e) {
+      // Fallback local UI delete if backend route is unavailable
+      setCategories(prev => prev.filter(c => c !== catName));
+      if (activeCategory === catName) setActiveCategory('ALL');
     }
   };
 
@@ -77,71 +89,91 @@ export default function Inbox() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Smart Inbox</h1>
-          <p className="text-slate-400 text-sm">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 mb-2">Smart Inbox</h1>
+          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">
             Processed by Watcher → Classification → Priority → Research Agents
           </p>
         </div>
         <button
           onClick={triggerSync}
           disabled={syncing}
-          className="flex items-center space-x-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-semibold transition-colors"
+          className="flex items-center space-x-2 px-5 py-2.5 btn-primary-custom rounded-xl text-sm font-bold transition-transform shadow-lg"
         >
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          {syncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
           <span>{syncing ? 'Syncing…' : 'Sync Gmail'}</span>
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg text-sm">
+        <div className="bg-[#C5192D]/10 border border-[#C5192D]/20 text-[#C5192D] p-5 rounded-xl text-sm font-semibold shadow-sm">
           {error}
         </div>
       )}
 
-      <div className="flex gap-2 bg-slate-900 p-2 rounded-xl border border-slate-800 items-center">
-        <div className="flex gap-2 overflow-x-auto custom-scrollbar flex-1">
+      <div className="flex gap-2 glass-panel p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm items-center">
+        <div className="flex gap-2 overflow-x-auto custom-scrollbar flex-1 pb-1 sm:pb-0 pt-2 px-1">
           {categories.map(cat => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+              onClick={() => {
+                if (editMode === 'delete' && cat !== 'ALL') handleDeleteCategory(cat);
+                else setActiveCategory(cat);
+              }}
+              className={`relative px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap group ${
                 activeCategory === cat
-                  ? 'bg-violet-600 text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
+                  ? 'bg-[#0066FF] text-white shadow-md'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700'
+              } ${editMode === 'delete' && cat !== 'ALL' ? 'hover:bg-rose-100 dark:hover:bg-rose-900/40 !text-rose-600 dark:!text-rose-400' : ''}`}
             >
               {cat}
+              {editMode === 'delete' && cat !== 'ALL' && (
+                 <span className="absolute -top-1 -right-1 bg-rose-500 text-white w-4 h-4 rounded-full text-[10px] flex items-center justify-center shadow-sm">x</span>
+              )}
             </button>
           ))}
         </div>
         
-        <div className="pl-2 border-l border-slate-700">
-          {showCatInput ? (
+        <div className="pl-3 border-l border-slate-200 dark:border-slate-700 flex items-center">
+          {editMode === 'idle' && (
+            <button
+              onClick={() => setEditMode('options')}
+              className="px-4 py-2 rounded-xl text-sm font-bold text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 shadow-sm transition-all whitespace-nowrap flex-shrink-0"
+            >
+              Edit
+            </button>
+          )}
+          {editMode === 'options' && (
+            <div className="flex items-center space-x-2">
+              <button onClick={() => setEditMode('add')} className="px-4 py-2 bg-[#0066FF] hover:bg-blue-600 text-white text-sm rounded-xl transition-colors font-bold shadow-sm">Add</button>
+              <button onClick={() => setEditMode('delete')} className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white text-sm rounded-xl transition-colors font-bold shadow-sm">Delete</button>
+              <button onClick={() => setEditMode('idle')} className="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 text-sm rounded-xl font-bold transition-colors">Cancel</button>
+            </div>
+          )}
+          {editMode === 'add' && (
             <div className="flex items-center space-x-2">
               <input 
                 type="text" 
                 value={newCatName} 
                 onChange={e => setNewCatName(e.target.value)} 
                 placeholder="Ex: Travel" 
-                className="px-3 py-1 text-sm bg-slate-800 text-white rounded border border-slate-700 outline-none w-28" 
+                className="px-4 py-2 text-sm bg-slate-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner outline-none w-32 focus:border-[#0066FF]/50" 
                 onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
                 autoFocus
               />
-              <button onClick={handleAddCategory} className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded transition-colors font-medium">Add</button>
-              <button onClick={() => setShowCatInput(false)} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm rounded transition-colors font-medium">Cancel</button>
+              <button onClick={handleAddCategory} className="px-4 py-2 bg-[#2E9A47] hover:bg-green-700 text-white text-sm rounded-xl transition-colors font-bold shadow-sm">Save</button>
+              <button onClick={() => setEditMode('idle')} className="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 text-sm rounded-xl font-bold transition-colors">Cancel</button>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowCatInput(true)}
-              className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-slate-700 hover:bg-slate-600 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all whitespace-nowrap flex-shrink-0"
-            >
-              + Add Category
-            </button>
+          )}
+          {editMode === 'delete' && (
+            <div className="flex items-center space-x-2">
+               <span className="text-sm text-rose-500 font-bold px-2 whitespace-nowrap">Select to delete</span>
+               <button onClick={() => setEditMode('idle')} className="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 text-sm rounded-xl font-bold transition-colors">Done</button>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {emails
           .filter(e => {
             const catLower = (e.category || '').toLowerCase();

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}AI Agent Ecosystem Containers - AgentOS{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <h2 style="color: #fff; font-size: 1.4rem;">🤖 AI Agent Containers Overview</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">Live status, ports, latency, request metrics, and real-time logs for all 13 background agents.</p>
+    </div>
+    <button class="btn-primary" onclick="fetchAgentsStatus()"><i data-lucide="rotate-cw"></i> Refresh Containers</button>
+</div>
+
+<div class="agent-grid" id="docker-agent-grid">
+    <!-- Dynamically rendered via fetchAgentsStatus() -->
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof fetchAgentsStatus === "function") {
+            fetchAgentsStatus();
+        }
+    });
+</script>
+{% endblock %}

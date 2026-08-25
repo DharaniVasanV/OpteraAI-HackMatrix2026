@@ -49,56 +49,63 @@ async def parse_google_form(form_url: str, user_email: str = "default"):
 
 async def _playwright_parse(clean_url: str, user_email: str = "default"):
     from playwright.async_api import async_playwright
-    from services.google_auth import is_google_login_page, google_authenticate
+    import os
+    # Import the shared cookie loader from form_filler
+    try:
+        from services.form_filler import _load_google_cookies
+    except ImportError:
+        from Filler_Agent.services.form_filler import _load_google_cookies
 
-    session_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "meeting-agent", "google_session.json"))
+    google_cookies = _load_google_cookies()
+
     async with async_playwright() as p:
-        import undetected_chromedriver as uc
-        import json
-        
-        # Launch patched Chrome via UC
-        options = uc.ChromeOptions()
-        user_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "meeting-agent", "chrome_profile"))
-        options.add_argument(f"--user-data-dir={user_data_dir}")
-        options.add_argument("--window-size=1280,900")
-        options.add_argument("--disable-infobars")
-        driver = uc.Chrome(options=options)
-        
-        cdp_url = driver.caps.get("goog:chromeOptions", {}).get("debuggerAddress")
-        if not cdp_url:
-            cdp_url = driver.caps.get("goog:chromeOptions", {}).get("debuggerAddress")
-            
-        context = None
-        browser = None
+        browser = await p.chromium.launch(
+            headless=False,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-extensions",
+            ]
+        )
+
+        context = await browser.new_context(
+            viewport={"width": 1280, "height": 900},
+            locale="en-US",
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/127.0.0.0 Safari/537.36"
+            ),
+        )
+
+        if google_cookies:
+            await context.add_cookies(google_cookies)
+            logger.info(f"[parser] Injected {len(google_cookies)} Google cookies.")
+
+        page = await context.new_page()
+        await page.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => undefined });")
+
         try:
-            browser = await p.chromium.connect_over_cdp(f"http://{cdp_url}")
-            context = browser.contexts[0]
-            page = context.pages[0] if context.pages else await context.new_page()
-
-            response = await page.goto(clean_url, wait_until="domcontentloaded", timeout=30000)
+            response = await page.goto(clean_url, wait_until="domcontentloaded", timeout=45000)
             await page.wait_for_timeout(3000)
-
             page_title = await page.title()
 
-            # 404 check
             if (response and response.status == 404) or "Page not found" in page_title:
                 return {"error": "Google Form not found (404). Please check the URL.", "title": "Not Found", "questions": []}
 
-            # Auth check
-            if await is_google_login_page(page, page_title):
-                authenticated, auth_error = await google_authenticate(page)
-                if not authenticated:
-                    return {"error": auth_error or "Form requires Google login but authentication failed.", "title": "Auth Required", "questions": []}
-                # After auth, Google redirects automatically — just wait, don't goto again
-                await page.wait_for_timeout(4000)
-                try:
-                    await page.wait_for_url(lambda url: "accounts.google.com" not in url, timeout=15000)
-                except Exception:
-                    pass
-                await page.wait_for_timeout(2000)
-                page_title = await page.title()
+            current_url = page.url.lower()
+            if "accounts.google.com" in current_url and "signin" in current_url:
+                return {
+                    "error": (
+                        "Google session expired. Please click 'Connect Bot Session' on the Meeting Agent "
+                        "dashboard to refresh your session, then try again."
+                    ),
+                    "title": "Auth Required",
+                    "questions": []
+                }
 
-            # Wait for form content
             try:
                 await page.wait_for_selector(
                     '[jsmodel], div[data-params], div.freebirdFormviewerViewItemsItemItem, div[role="listitem"]',
@@ -112,8 +119,7 @@ async def _playwright_parse(clean_url: str, user_email: str = "default"):
                 t = await page.query_selector('div[role="heading"], h1, div.freebirdFormviewerViewHeaderHeader')
                 if t:
                     txt = (await t.inner_text()).strip()
-                    if txt:
-                        form_title = txt
+                    if txt: form_title = txt
             except Exception:
                 pass
 
@@ -122,26 +128,16 @@ async def _playwright_parse(clean_url: str, user_email: str = "default"):
             if questions:
                 return {"title": form_title or "Google Form", "description": "Extracted via Playwright.", "questions": questions}
             else:
-                # Save HTML for debugging
-                try:
-                    html = await page.evaluate("document.body.innerHTML")
-                    with open("debug_form_dump.html", "w", encoding="utf-8") as f:
-                        f.write(html)
-                    logger.warning("No questions found — HTML saved to debug_form_dump.html")
-                except Exception:
-                    pass
-                return {"error": "Failed to fetch form questions from the URL. Please make sure the Google Form is valid and publicly accessible.", "title": "Extraction Failed", "questions": []}
+                return {"error": "Failed to fetch form questions. Make sure the Google Form URL is valid and accessible.", "title": "Extraction Failed", "questions": []}
 
         except Exception as err:
             logger.error(f"Playwright parse error: {err}")
             return {"error": f"Failed to fetch form from URL: {err}", "title": "Extraction Failed", "questions": []}
         finally:
+            if 'context' in locals() and context:
+                await context.close()
             if browser:
                 await browser.close()
-            try:
-                driver.quit()
-            except:
-                pass
 
 
 async def _extract_questions(page) -> list:
@@ -179,15 +175,29 @@ async def _extract_questions(page) -> list:
             if data_params_str:
                 try:
                     clean_str = data_params_str.strip()
-                    if clean_str.startswith("%.@."):
-                        clean_str = clean_str[5:]
-                    data = json.loads(clean_str)
-                    
-                    if len(data) >= 4:
-                        raw_q_text = str(data[1] or "")
+                    # Google Forms prefixes with "%.@." (exactly 4 chars) — try both stripped and raw
+                    parsed_data = None
+                    for attempt in [clean_str, clean_str[4:] if clean_str.startswith("%.@.") else None]:
+                        if attempt is None:
+                            continue
+                        try:
+                            parsed_data = json.loads(attempt)
+                            break
+                        except Exception:
+                            continue
+
+                    if parsed_data and isinstance(parsed_data, list) and len(parsed_data) >= 2:
+                        # Structure: [form_id, question_text, description, type_block, choices_block, ...]
+                        raw_q_text = str(parsed_data[1] or "")
                         question_text = raw_q_text.replace("*", "").split("\n")[0].strip().rstrip(":")
-                        
-                        type_id = data[3]
+
+                        # type_block is parsed_data[3]: can be int or [int, ...] 
+                        type_block = parsed_data[3] if len(parsed_data) > 3 else 0
+                        if isinstance(type_block, list):
+                            type_id = type_block[0] if type_block else 0
+                        else:
+                            type_id = type_block if isinstance(type_block, int) else 0
+
                         type_mapping = {
                             0: "short_text",
                             1: "paragraph",
@@ -196,20 +206,32 @@ async def _extract_questions(page) -> list:
                             4: "checkbox",
                             9: "file",
                             10: "date",
-                            11: "time"
+                            11: "time",
                         }
                         field_type = type_mapping.get(type_id, "short_text")
-                        
-                        # Extract choices/options for multiple choice, dropdowns, checkboxes
-                        if type_id in (2, 3, 4) and len(data) > 4 and data[4]:
-                            options_data = data[4][0][1]
-                            for opt_item in options_data:
-                                if opt_item and len(opt_item) > 0 and opt_item[0] is not None:
-                                    options.append(str(opt_item[0]).strip())
-                        
-                        parsed_from_params = True
+
+                        # Extract choices — structure: parsed_data[4][0][1] = list of [option_text, ...]
+                        if type_id in (2, 3, 4) and len(parsed_data) > 4 and parsed_data[4]:
+                            try:
+                                options_block = parsed_data[4]
+                                # Can be [[...]] or [[[option, ...], ...]]
+                                if isinstance(options_block[0], list) and len(options_block[0]) > 1:
+                                    options_raw = options_block[0][1]
+                                else:
+                                    options_raw = options_block
+                                for opt_item in (options_raw or []):
+                                    if opt_item and isinstance(opt_item, list) and len(opt_item) > 0 and opt_item[0]:
+                                        options.append(str(opt_item[0]).strip())
+                                    elif isinstance(opt_item, str) and opt_item.strip():
+                                        options.append(opt_item.strip())
+                            except Exception:
+                                pass
+
+                        if question_text:
+                            parsed_from_params = True
                 except Exception as pe:
-                    logger.warning(f"Failed to parse data-params JSON: {pe}")
+                    logger.debug(f"data-params parse note (non-critical): {pe}")
+
 
             # Fallback to DOM selectors if data-params extraction failed
             if not question_text:

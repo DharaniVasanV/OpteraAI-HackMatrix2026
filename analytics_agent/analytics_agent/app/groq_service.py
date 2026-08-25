@@ -34,7 +34,7 @@ def generate_rule_based_fallback(metrics: AnalyticsDashboardMetrics) -> AIInsigh
             summary="No analytics data recorded for this period yet.",
             positive_trends=[],
             weak_areas=["No recent activity logged across Email, Meetings, Tasks, Learning, or Career."],
-            recommendations=["Add real analytics data using the manual input form or connect AgentOS integration agents."],
+            recommendations=["Keep AgentOS running to automatically track incoming emails, calendar meetings, and browser sessions."],
             warnings=["No data available for AI analysis."],
             generated_at=metrics.end_date
         )
@@ -93,7 +93,9 @@ def generate_ai_insights(metrics: AnalyticsDashboardMetrics) -> AIInsightsRespon
     models_to_try = [
         getattr(settings, "GROQ_MODEL", "llama-3.3-70b-versatile"),
         "llama-3.1-8b-instant",
-        "llama3-70b-8192"
+        "llama3-70b-8192",
+        "openai/gpt-oss-120b",
+        "meta-llama/llama-prompt-guard-2-86m"
     ]
 
     try:

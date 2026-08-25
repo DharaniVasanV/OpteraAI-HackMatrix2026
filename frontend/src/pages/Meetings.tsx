@@ -147,12 +147,12 @@ export default function Meetings() {
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'scheduled': return 'bg-blue-500/20 text-blue-400 border border-blue-500/40';
-      case 'joining': return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40';
-      case 'in_progress': return 'bg-green-500/20 text-green-400 border border-green-500/40 animate-pulse';
-      case 'completed': return 'bg-purple-500/20 text-purple-400 border border-purple-500/40';
-      case 'failed': return 'bg-red-500/20 text-red-400 border border-red-500/40';
-      default: return 'bg-slate-500/20 text-slate-400 border border-slate-500/40';
+      case 'scheduled': return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 border border-blue-200';
+      case 'joining': return 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+      case 'in_progress': return 'bg-green-50 dark:bg-green-900/20 text-green-700 border border-green-200 animate-pulse';
+      case 'completed': return 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 border border-purple-200';
+      case 'failed': return 'bg-red-50 text-red-700 border border-red-200';
+      default: return 'bg-slate-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-bold border border-slate-200';
     }
   };
 
@@ -173,14 +173,14 @@ export default function Meetings() {
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Meetings Agent Hub</h1>
-          <p className="text-slate-400 text-sm">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mb-1">Meetings Agent Hub</h1>
+          <p className="text-gray-600 dark:text-gray-300 font-medium text-sm">
             Autonomous joining, transcript analysis, and inbox integration
           </p>
         </div>
         <div className="flex gap-3">
 
-          <button onClick={fetchMeetings} className="flex items-center space-x-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-semibold transition-colors">
+          <button onClick={fetchMeetings} className="flex items-center space-x-2 px-4 py-2 bg-[#0066FF] hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm">
             {loadingMeetings ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             <span>Refresh Dashboard</span>
           </button>
@@ -196,78 +196,78 @@ export default function Meetings() {
       {/* STATS ROW */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Total Meetings', val: meetings.length, color: 'text-white' },
-          { label: 'Scheduled', val: scheduledCount, color: 'text-blue-400' },
-          { label: 'In Progress', val: inProgressCount, color: 'text-green-400' },
-          { label: 'Completed', val: completedCount, color: 'text-purple-400' },
+          { label: 'Total Meetings', val: meetings.length, color: 'text-gray-900 dark:text-gray-100' },
+          { label: 'Scheduled', val: scheduledCount, color: 'text-[#0066FF]' },
+          { label: 'In Progress', val: inProgressCount, color: 'text-[#2E9A47]' },
+          { label: 'Completed', val: completedCount, color: 'text-purple-600' },
         ].map(s => (
-          <div key={s.label} className="glass-panel p-5 rounded-xl text-center">
+          <div key={s.label} className="glass-card p-5 rounded-xl text-center">
             <div className={`text-3xl font-bold ${s.color} mb-1`}>{s.val}</div>
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{s.label}</div>
+            <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 font-medium uppercase tracking-widest">{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* ACTIVE BOTS GRID */}
       <div>
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <Cpu className="w-5 h-5 text-primary" /> Active Bot Assignments
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <Cpu className="w-5 h-5 text-[#0066FF]" /> Active Bot Assignments
         </h2>
         
         {loadingMeetings ? (
-          <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-[#0066FF]" /></div>
         ) : meetings.length === 0 ? (
-          <div className="text-center p-12 glass-panel rounded-xl text-slate-400">
-            <Play className="w-10 h-10 mx-auto mb-4 opacity-40 text-blue-400" />
+          <div className="text-center p-12 glass-card rounded-xl text-gray-600 dark:text-gray-300 font-medium border border-slate-200 dark:border-slate-700">
+            <Play className="w-10 h-10 mx-auto mb-4 opacity-40 text-[#0066FF]" />
             <p>No active meetings in bots database. Add from inbox below.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {meetings.map(m => (
-              <div key={m.id} className="glass-panel rounded-xl p-5 flex flex-col justify-between">
+              <div key={m.id} className="glass-card rounded-xl p-5 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-bold text-lg text-white truncate pr-2">{m.title}</h3>
+                    <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 truncate pr-2">{m.title}</h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusBadge(m.status)}`}>
                       {m.status}
                     </span>
                   </div>
                   
-                  <div className="space-y-2 text-sm text-slate-300">
+                  <div className="space-y-2 text-sm text-gray-900 dark:text-gray-100 font-bold">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Platform:</span>
-                      <span className="font-medium bg-slate-800/80 px-2 py-0.5 rounded">{getPlatformIcon(m.platform)}</span>
+                      <span className="text-slate-400 dark:text-slate-400 font-semibold">Platform:</span>
+                      <span className="font-medium bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded">{getPlatformIcon(m.platform)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Organizer:</span>
+                      <span className="text-slate-400 dark:text-slate-400 font-semibold">Organizer:</span>
                       <span className="truncate max-w-[200px]">{m.organizer || 'Unknown'}</span>
                     </div>
                     {(m.meeting_date || m.start_time) && (
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Scheduled:</span>
+                        <span className="text-slate-400 dark:text-slate-400 font-semibold">Scheduled:</span>
                         <span>{m.meeting_date} {m.start_time}</span>
                       </div>
                     )}
                     <div className="flex flex-col mt-2">
-                      <span className="text-slate-500 text-xs mb-1">Meeting URL:</span>
-                      <a href={m.meeting_url} target="_blank" className="text-blue-400 hover:underline truncate bg-slate-900/50 p-2 rounded-md font-mono text-xs border border-slate-800">
+                      <span className="text-slate-400 dark:text-slate-400 font-semibold text-xs mb-1">Meeting URL:</span>
+                      <a href={m.meeting_url} target="_blank" className="text-[#0066FF] hover:underline truncate bg-white dark:bg-slate-800 shadow-sm p-2 rounded-md font-mono text-xs border border-slate-200 dark:border-slate-700">
                         {m.meeting_url}
                       </a>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-800/50">
-                  <button onClick={() => triggerBot(m.id)} className="flex-1 flex justify-center items-center gap-2 bg-primary/20 hover:bg-primary/30 text-primary px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
+                <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                  <button onClick={() => triggerBot(m.id)} className="flex-1 flex justify-center items-center gap-2 bg-[#0066FF] hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm">
                     <Play className="w-4 h-4" /> Join Bot
                   </button>
-                  <button onClick={() => setTranscriptModal(m.id)} className="flex-1 flex justify-center items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
+                  <button onClick={() => setTranscriptModal(m.id)} className="flex-1 flex justify-center items-center gap-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
                     <FileText className="w-4 h-4" /> Transcript
                   </button>
-                  <button onClick={() => setEditModal(m)} className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors">
+                  <button onClick={() => setEditModal(m)} className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-gray-900 dark:text-gray-100 font-bold rounded-lg transition-colors border border-slate-200">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => deleteMeeting(m.id)} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors">
+                  <button onClick={() => deleteMeeting(m.id)} className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -278,13 +278,13 @@ export default function Meetings() {
       </div>
 
       {/* CLASSIFIED EMAILS SECTION */}
-      <div className="pt-8 border-t border-slate-800">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <CalendarPlus className="w-5 h-5 text-emerald-400" /> Watcher Inbox (Suggested Meetings)
+      <div className="pt-8 border-t border-slate-200 dark:border-slate-700 mt-8">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <CalendarPlus className="w-5 h-5 text-[#2E9A47]" /> Watcher Inbox (Suggested Meetings)
         </h2>
         
         {loadingEmails ? (
-           <div className="flex text-slate-400 items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading suggested emails...</div>
+           <div className="flex text-gray-600 dark:text-gray-300 font-medium items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading suggested emails...</div>
         ) : (
           <div className="space-y-3">
             {emails.map((email, i) => (
@@ -296,7 +296,7 @@ export default function Meetings() {
               />
             ))}
             {emails.length === 0 && (
-              <div className="text-center p-8 glass-panel rounded-xl text-slate-400">
+              <div className="text-center p-8 glass-card rounded-xl text-gray-600 dark:text-gray-300 font-medium">
                 <CheckCircle2 className="w-8 h-8 mx-auto mb-3 opacity-40 text-emerald-400" />
                 <p>No meeting communication detected in inbox.</p>
               </div>
@@ -308,18 +308,18 @@ export default function Meetings() {
       {/* TRANSCRIPT MODAL */}
       {transcriptModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm/50">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-primary" /> Meeting Transcript
               </h3>
-              <button onClick={() => setTranscriptModal(null)} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+              <button onClick={() => setTranscriptModal(null)} className="text-gray-600 dark:text-gray-300 font-medium hover:text-gray-900 dark:text-gray-100"><X className="w-5 h-5" /></button>
             </div>
             
             <div className="p-5 flex-1 overflow-y-auto min-h-[300px]">
               {(() => {
                 const trn = meetings.find(m => m.id === transcriptModal)?.transcript;
-                if (!trn) return <div className="text-center text-slate-500 py-10 italic">No transcript recorded yet. Wait for bot to complete.</div>;
+                if (!trn) return <div className="text-center text-slate-400 dark:text-slate-400 font-semibold py-10 italic">No transcript recorded yet. Wait for bot to complete.</div>;
                 
                 return (
                   <div className="space-y-4">
@@ -330,13 +330,13 @@ export default function Meetings() {
                       if (match) {
                          const [, time, speaker, text] = match;
                         const isBot = speaker.includes('Bot') || speaker.includes('AI');
-                         const spkColor = isBot ? 'text-primary' : (speaker.includes('Speaker') ? 'text-slate-400' : 'text-emerald-400');
+                         const spkColor = isBot ? 'text-primary' : (speaker.includes('Speaker') ? 'text-gray-600 dark:text-gray-300 font-medium' : 'text-emerald-400');
                          return (
                            <div key={i} className="flex gap-3 text-sm">
                              <div className="text-slate-600 font-mono text-xs pt-1 whitespace-nowrap">[{time}]</div>
-                             <div className="flex-1 bg-slate-800/30 p-3 rounded-lg border border-slate-800/50">
+                             <div className="flex-1 bg-slate-100 dark:bg-slate-800/30 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
                                <div className={`font-bold mb-1 ${spkColor}`}>{speaker}</div>
-                               <div className="text-slate-300 leading-relaxed">{text}</div>
+                               <div className="text-gray-900 dark:text-gray-100 font-bold leading-relaxed">{text}</div>
                              </div>
                            </div>
                          );
@@ -346,31 +346,31 @@ export default function Meetings() {
                       if (inlineMatch) {
                          const [, speaker, text] = inlineMatch;
                          const isBot = speaker.includes('Bot') || speaker.includes('AI');
-                         const spkColor = isBot ? 'text-primary' : (speaker.includes('Speaker') ? 'text-slate-400' : 'text-purple-400');
+                         const spkColor = isBot ? 'text-primary' : (speaker.includes('Speaker') ? 'text-gray-600 dark:text-gray-300 font-medium' : 'text-purple-400');
                          return (
                            <div key={i} className="flex gap-3 text-sm">
                              <div className="text-slate-600 font-mono text-xs pt-1 w-12 text-center">-</div>
-                             <div className="flex-1 bg-slate-800/30 p-3 rounded-lg border border-slate-800/50">
+                             <div className="flex-1 bg-slate-100 dark:bg-slate-800/30 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
                                <div className={`font-bold mb-1 ${spkColor}`}>{speaker.trim()}</div>
-                               <div className="text-slate-300 leading-relaxed">{text.trim()}</div>
+                               <div className="text-gray-900 dark:text-gray-100 font-bold leading-relaxed">{text.trim()}</div>
                              </div>
                            </div>
                          );
                       }
 
-                      return <div key={i} className="text-sm text-slate-400 p-2 bg-slate-800/20 rounded">{chunk}</div>;
+                      return <div key={i} className="text-sm text-gray-600 dark:text-gray-300 font-medium p-2 bg-slate-100 dark:bg-slate-800/20 rounded">{chunk}</div>;
                     })}
                   </div>
                 );
               })()}
             </div>
             
-            <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center">
-              <span className="text-xs text-slate-500">Run Identify Names to resolve 'Speaker 1' to real names using Groq AI.</span>
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm/50 flex justify-between items-center">
+              <span className="text-xs text-slate-400 dark:text-slate-400 font-semibold">Run Identify Names to resolve 'Speaker 1' to real names using Groq AI.</span>
               <button 
                 onClick={() => identifyNames(transcriptModal)}
                 disabled={reformatting || !meetings.find(m => m.id === transcriptModal)?.transcript}
-                className="flex items-center gap-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 px-4 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-semibold text-sm transition-colors border border-purple-200 disabled:opacity-50"
               >
                 {reformatting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />} 
                 {reformatting ? 'Analyzing...' : 'Identify Names'}
@@ -383,44 +383,44 @@ export default function Meetings() {
       {/* EDIT MODAL */}
       {editModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-5">
-            <h3 className="font-bold text-white mb-4">Edit Meeting</h3>
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-5">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-4">Edit Meeting</h3>
             <form onSubmit={saveEdit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Meeting Date (YYYY-MM-DD)</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 font-medium mb-1">Meeting Date (YYYY-MM-DD)</label>
                 <input 
                   type="text" 
                   value={editModal.meeting_date || ''} 
                   onChange={(e) => setEditModal({...editModal, meeting_date: e.target.value})}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-gray-900 dark:text-gray-100 text-sm"
                   placeholder="2026-07-31"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Start Time (HH:MM)</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 font-medium mb-1">Start Time (HH:MM)</label>
                 <input 
                   type="text" 
                   value={editModal.start_time || ''} 
                   onChange={(e) => setEditModal({...editModal, start_time: e.target.value})}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-gray-900 dark:text-gray-100 text-sm"
                   placeholder="14:30"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Meeting URL</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 font-medium mb-1">Meeting URL</label>
                 <input 
                   type="text" 
                   value={editModal.meeting_url || ''} 
                   onChange={(e) => setEditModal({...editModal, meeting_url: e.target.value})}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-gray-900 dark:text-gray-100 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Platform</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 font-medium mb-1">Platform</label>
                 <select 
                   value={editModal.platform || ''} 
                   onChange={(e) => setEditModal({...editModal, platform: e.target.value})}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-gray-900 dark:text-gray-100 text-sm"
                 >
                   <option value="">Auto-detect</option>
                   <option value="google_meet">Google Meet</option>
@@ -429,11 +429,11 @@ export default function Meetings() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Status</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 font-medium mb-1">Status</label>
                 <select 
                   value={editModal.status || ''} 
                   onChange={(e) => setEditModal({...editModal, status: e.target.value})}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-gray-900 dark:text-gray-100 text-sm"
                 >
                   <option value="scheduled">Scheduled</option>
                   <option value="joining">Joining</option>
@@ -443,8 +443,8 @@ export default function Meetings() {
                 </select>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setEditModal(null)} className="px-4 py-2 hover:bg-slate-800 text-slate-300 rounded-lg text-sm bg-transparent">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold">Save Changes</button>
+                <button type="button" onClick={() => setEditModal(null)} className="px-5 py-2 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 font-bold rounded-lg text-sm bg-transparent transition-colors">Cancel</button>
+                <button type="submit" className="px-5 py-2 btn-primary-custom shadow-md rounded-lg text-sm font-semibold">Save Changes</button>
               </div>
             </form>
           </div>
