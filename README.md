@@ -861,6 +861,10 @@ The exact ports may vary depending on the deployment configuration.
 
 **Project Presentation:** <presentation-link>
 
+**Project Documentation:** [https://drive.google.com/file/d/1242sfGONPTTiajX-IzzcD6EaWt76VULY/view?usp=sharing]
+
+**Demo Video:** [https://drive.google.com/file/d/1kys_Zo_PKKAPH71qPrkaCSoD1306Acm0/view?usp=sharing]
+
 ---
 
 ## 25. Conclusion
