@@ -857,13 +857,11 @@ The exact ports may vary depending on the deployment configuration.
 
 ## 24. Live Demo
 
-**Live Demo:** <live-demo-link>
-
-**Project Presentation:** <presentation-link>
+**Project Presentation:** [https://drive.google.com/file/d/1nqxMoS_YEPAHyfhXFUM_3v3KIW9-a1Et/view?usp=sharing]
 
 **Project Documentation:** [https://drive.google.com/file/d/1242sfGONPTTiajX-IzzcD6EaWt76VULY/view?usp=sharing]
 
-**Demo Video:** [https://drive.google.com/file/d/1kys_Zo_PKKAPH71qPrkaCSoD1306Acm0/view?usp=sharing]
+**Demo Video:** [https://drive.google.com/drive/folders/1cVyBKyX5FMpy2AnCwwitJmcTknelBWNu]
 
 ---
 
